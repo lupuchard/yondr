@@ -1,0 +1,24 @@
+[package]
+name = "Yondr"
+version = "0.0.1"
+authors = ["Luke Puchner-Hardman <lupuchard@gmail.com>"]
+
+[[bin]]
+name = "client"
+path = "src/client_main.rs"
+
+[[bin]]
+name = "server"
+path = "src/server_main.rs"
+
+[dependencies]
+anymap = "0.9"
+log = "0.2"
+ansi_term = "*"
+num = "*"
+#wire = "0.0.9"
+bincode = "0.0.10"
+rustc-serialize = "0.3"
+
+[dependencies.wire]
+git = "https://github.com/TyOverby/wire"
