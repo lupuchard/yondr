@@ -1,8 +1,4 @@
-
 use std::collections::HashMap;
-
-use name::Name;
-
 
 pub type PropertyIdx = u16;
 
@@ -11,16 +7,16 @@ pub type PropertyIdx = u16;
 pub enum Val {
 	Bool(bool),
 	Int(i32),
-	Float(f32),
+	Float(f64),
 	Str(Box<String>),
-} // TODO unsafe enum
+}
 impl Val {
 	pub fn get_type_index(&self) -> u16 {
 		match *self {
-			Val::Bool(_)   => 1,
-			Val::Int(_)    => 2,
-			Val::Float(_)  => 3,
-			Val::Str(_)    => 4,
+			Val::Bool(_)  => 1,
+			Val::Int(_)   => 2,
+			Val::Float(_) => 3,
+			Val::Str(_)   => 4,
 		}
 	}
 	pub fn is_same_type(&self, other: &Val) -> bool {
@@ -33,8 +29,9 @@ impl Val {
 }
 
 /// A Property a certain type of thing has.
+#[derive(Debug)]
 pub struct Property {
-	pub name: Name,
+	pub name: String,
 	pub value: Val, // type and default value
 	pub index: PropertyIdx,
 	// formula;
@@ -44,10 +41,7 @@ impl Property {
 		self.value.clone()
 	}
 	pub fn get_name(&self) -> &str {
-		&self.name.id[..]
-	}
-	pub fn get_package(&self) -> u32 {
-		self.name.package
+		&self.name[..]
 	}
 	pub fn get_index(&self) -> PropertyIdx {
 		self.index
@@ -55,9 +49,10 @@ impl Property {
 }
 
 /// Manages the properties. Retrieve by index or name.
+#[derive(Debug)]
 pub struct PropertySystem {
 	properties: Vec<Box<Property>>,
-	name_map:   HashMap<Name, PropertyIdx>,
+	name_map:   HashMap<String, PropertyIdx>,
 }
 impl PropertySystem {
 
@@ -75,7 +70,7 @@ impl PropertySystem {
 	///   * value - Both the type and default of the created property.
 	/// # Return value
 	///   Index of created property.
-	pub fn add(&mut self, name: Name, value: Val) -> PropertyIdx {
+	pub fn add(&mut self, name: String, value: Val) -> PropertyIdx {
 		let index = self.properties.len() as PropertyIdx;
 		self.name_map.insert(name.clone(), index);
 		self.properties.push(Box::new(Property {
@@ -98,7 +93,7 @@ impl PropertySystem {
 
 	/// Returns the object of the given name,
 	/// or None if no object of the given name is in the Manager.
-	pub fn with_name(&self, name: &Name) -> Option<&Property> {
+	pub fn with_name(&self, name: &str) -> Option<&Property> {
 		match self.name_map.get(name) {
 			Some(i) => Some(self.at(*i)),
 			None    => None,
@@ -106,7 +101,7 @@ impl PropertySystem {
 	}
 
 	/// Returns index of property with given name.
-	pub fn name_to_index(&self, name: &Name) -> Option<PropertyIdx> {
+	pub fn name_to_index(&self, name: &str) -> Option<PropertyIdx> {
 		match self.name_map.get(name) {
 			Some(i) => Some(*i),
 			None    => None,
@@ -117,11 +112,10 @@ impl PropertySystem {
 #[cfg(test)]
 mod test {
 	use super::*;
-	use name::Name;
 
 	#[test]
 	fn use_property() {
-		let prop = Property { name: Name::new("Cats", 0), value: Val::Int(3), index: 0 };
+		let prop = Property { name: "cats".to_string(), value: Val::Int(3), index: 0 };
 		assert_eq!(prop.get_name(), "cats");
 		match prop.get_type() {
 			Val::Int(val) => assert!(val == 3),

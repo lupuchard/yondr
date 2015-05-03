@@ -1,6 +1,6 @@
 
 use log;
-use log::{LogRecord, LogLevel, SetLoggerError, LogLevelFilter};
+use log::{LogRecord, LogLevel, SetLoggerError, LogLevelFilter, LogMetadata};
 use ansi_term::Colour;
 
 pub fn init() -> Result<(), log::SetLoggerError> {
@@ -36,8 +36,8 @@ impl Logger {
 }
 
 impl log::Log for Logger {
-	fn enabled(&self, level: LogLevel, _: &str) -> bool {
-		level <= LogLevel::Debug
+	fn enabled(&self, metadata: &LogMetadata) -> bool {
+		metadata.level() <= LogLevel::Debug
 	}
 
 	fn log(&self, record: &LogRecord) {

@@ -5,9 +5,8 @@ use wire;
 use wire::{InTcpStream, OutTcpStream};
 
 use network_shared::{SMessage, CMessage, Result, Error};
-use resource::{SessionID, ResourceManager};
-use name::Name;
-
+use resource::{Name, SessionID};
+use resource;
 
 pub fn connect(server: &str) -> Result<()> {
 	let (i, o) = wire::connect_tcp(server, SMessage::limit(), CMessage::limit()).unwrap();
@@ -19,11 +18,11 @@ pub fn connect(server: &str) -> Result<()> {
 struct Client {
 	i: InTcpStream<SMessage>,
 	o: OutTcpStream<CMessage>,
-	rm: ResourceManager,
+	rm: resource::Manager,
 }
 impl Client {
 	fn new(i: InTcpStream<SMessage>, o: OutTcpStream<CMessage>) -> Client {
-		Client { i: i, o: o, rm: ResourceManager::new(&Path::new("cache")).unwrap() }
+		Client { i: i, o: o, rm: resource::Manager::new(&Path::new("cache")).unwrap() }
 	}
 	fn begin(&mut self) -> Result<()> {
 

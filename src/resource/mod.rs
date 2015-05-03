@@ -3,50 +3,72 @@ use std::collections::{HashMap, VecMap};
 use std::path::{Path, PathBuf};
 use std::io::{Read, Write};
 use std::ffi::OsStr;
-use std::{error, result, fs, io};
-use std::str::from_utf8;
+use std::{result, fs, io};
 use rustc_serialize::json;
 
 use util::{simplify_str, hash};
-use name::Name;
 
 pub type SessionID = u16;
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub enum ResourceData { Unknown(Vec<u8>), Json(json::Json) }
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Clone)]
+pub struct Name {
+	pub id: String,
+	pub package: u32,
+}
+impl Name {
+	pub fn new(id: &str, package: u32) -> Name {
+		Name { id: simplify_str(id), package: package }
+	}
+}
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, RustcDecodable, RustcEncodable)]
-pub enum ResourceType { Unknown         , Json }
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Copy, Clone, RustcDecodable, RustcEncodable)]
+pub enum Type { Unknown, Lua }
+impl Type {
+	pub fn get_extension(&self) -> &'static str {
+		match *self {
+			Type::Unknown => "what",
+			Type::Lua     => "lua",
+		}
+	}
+	pub fn from_extension(extension: &str) -> Type {
+		match extension {
+			"lua" => Type::Lua,
+			_     => Type::Unknown,
+		}
+	}
+}
 
 /// A resource yes.
 pub struct Resource {
+	ty: Type,
 	path: PathBuf,
 	name: Name,
 	session_id: SessionID,
-	data: ResourceData,
-	raw_data: Option<Vec<u8>>,
+	raw_data: Vec<u8>,
 	hash: u64,
 }
 impl Resource {
-
-	/// The data & type of resource.
-	pub fn get_data(&self) -> &ResourceData {
-		&self.data
+	pub fn new(name: Name, ty: Type, path: PathBuf, hash: u64, id: SessionID,
+	           mut raw: Vec<u8>) -> Resource {
+		raw.shrink_to_fit();
+		Resource {
+			path: path,
+			name: name,
+			session_id: id,
+			ty: ty,
+			raw_data: raw,
+			hash: hash,
+		}
 	}
 
+	/// The raw bytes that this data is for.
 	pub fn get_raw_data<'a>(&'a self) -> &'a Vec<u8> {
-		match self.data {
-			ResourceData::Unknown(ref d) => return d,
-			_ => (),
-		}
-		self.raw_data.as_ref().unwrap()
+		&self.raw_data
 	}
 
-	pub fn get_type(&self) -> ResourceType {
-		match self.data {
-			ResourceData::Unknown(_) => ResourceType::Unknown,
-			ResourceData::Json(_)    => ResourceType::Json,
-		}
+	/// The type of resource.
+	pub fn get_type(&self) -> Type {
+		self.ty
 	}
 
 	/// Where this resource is located in them files.
@@ -68,31 +90,6 @@ impl Resource {
 	pub fn get_session_id(&self) -> SessionID {
 		self.session_id
 	}
-
-	pub fn new(name: Name, path: PathBuf, hash: u64, id: SessionID,
-	           raw: Option<Vec<u8>>, data: ResourceData) -> Resource {
-		Resource {
-			path: path,
-			name: name,
-			session_id: id,
-			data: data,
-			raw_data: raw,
-			hash: hash,
-		}
-	}
-
-	pub fn new_unknown(name: Name, path: PathBuf, hash: u64, id: SessionID,
-	                   data: Vec<u8>) -> Resource {
-		Resource::new(name, path, hash, id, None, ResourceData::Unknown(data))
-	}
-	pub fn new_json(name: Name, path: PathBuf, hash: u64, id: SessionID,
-	                data: Vec<u8>) -> Result<Resource> {
-		let json = try!(json::Json::from_str(match from_utf8(&data) {
-			Ok(k) => k,
-			Err(_) => return Err(Error::Other("Json file not utf8.")),
-		}));
-		Ok(Resource::new(name, path, hash, id, Some(data), ResourceData::Json(json)))
-	}
 }
 
 pub struct Package {
@@ -102,22 +99,22 @@ pub struct Package {
 	pub metadata: json::Json,
 	pub resources: HashMap<String, PathBuf>,
 }
-pub struct ResourceManager {
+pub struct Manager {
 	directory: &'static Path,
 
 	packages: Vec<Package>,
 	package_name_map: HashMap<String, u32>,
-	
+
 	resources: Vec<Resource>,
 	name_map:       HashMap<Name, usize>,
 	session_id_map: VecMap<usize>,
 	next_session_id: SessionID,
 }
-impl ResourceManager {
+impl Manager {
 	/// Creates a new resource manager for the given directory.
 	/// May return an error if the resource manager has trouble scanning the given directory.
-	pub fn new(directory: &'static Path) -> Result<ResourceManager> {
-		let mut rm = ResourceManager {
+	pub fn new(directory: &'static Path) -> Result<Manager> {
+		let mut rm = Manager {
 			directory:        directory,
 			packages:         Vec::new(),
 			package_name_map: HashMap::new(),
@@ -150,7 +147,6 @@ impl ResourceManager {
 		Ok(())
 	}
 
-	/// Returns an iterator through all the packages in this ResourceManager.
 	pub fn packages(&self) -> &Vec<Package> {
 		&self.packages
 	}
@@ -182,14 +178,14 @@ impl ResourceManager {
 		Ok(pidx)
 	}
 
-	/// Loads all the resources from the given package into the ResourceManager.
+	/// Loads all the resources from the given package into the Manager.
 	/// This generates both their session id and version id.
 	/// (server function)
 	pub fn load_package(&mut self, package: u32) -> Result<()> {
 		if package as usize >= self.packages.len() {
 			return Err(Error::InvalidPackage);
 		}
-		
+
 		for entry in try!(fs::walk_dir(&self.packages[package as usize].path)) {
 			let entry_path = match entry {
 				Ok(e)  => e,
@@ -225,7 +221,7 @@ impl ResourceManager {
 		if package as usize >= self.packages.len() {
 			return Err(Error::InvalidPackage);
 		}
-		
+
 		if self.packages[package].resources.is_empty() {
 			try!(self.scan_resources(package as u32));
 		}
@@ -290,20 +286,18 @@ impl ResourceManager {
 		Ok(())
 	}
 
-	pub fn create_resource(&mut self, res: Name, res_type: ResourceType,
+	pub fn create_resource(&mut self, res: Name, res_type: Type,
 	                       version_id: u64, id: SessionID, data: Vec<u8>) -> Result<()> {
 		let pidx = res.package as usize;
 
+		// write data to file
 		let mut filepath = self.packages[pidx].path.clone();
 		filepath.push(&res.id[..]);
-		filepath.set_extension(match res_type {
-			ResourceType::Unknown => "what",
-			ResourceType::Json    => "json",
-		});
-
+		filepath.set_extension(res_type.get_extension());
 		let mut file = try!(fs::File::create(&filepath));
 		try!(file.write_all(&data));
 
+		// update metadata
 		try!(self.load_metadata(res.package));
 		let jsonval = json::Json::U64(version_id);
 		self.packages[pidx].metadata.as_object_mut().unwrap().insert(res.id, jsonval);
@@ -323,7 +317,7 @@ impl ResourceManager {
 			None => None,
 		}
 	}
-	pub fn get_resource_by_name(&self, name: &Name) -> Option<&Resource> {
+	pub fn get_resource_with_name(&self, name: &Name) -> Option<&Resource> {
 		match self.name_map.get(name) {
 			Some(idx) => Some(&self.resources[*idx]),
 			None => None,
@@ -332,11 +326,11 @@ impl ResourceManager {
 
 	fn new_resource(&mut self, path: PathBuf, package: u32,
 	                ver: u64, id: SessionID, data: Vec<u8>) -> Result<&Resource> {
-		
+
 		let name = {
 			let stem = path.file_stem().unwrap();
 			let name = try!(stem.to_str().ok_or(Error::Other("Bad filename.")));
-		
+
 			// files that start with underscore are ignored
 			if name.chars().next().unwrap() == '_' {
 				return Err(Error::Ignored);
@@ -345,14 +339,11 @@ impl ResourceManager {
 			Name::new(name, package)
 		};
 
-		// load resource
-		let goddammit_rust = path.clone();
-		let extension = goddammit_rust.extension().unwrap_or(OsStr::from_str("")).to_str().unwrap();
-		
-		let res = match extension {
-			"json" => try!(Resource::new_json(   name.clone(), path, ver, id, data)),
-			_      =>      Resource::new_unknown(name.clone(), path, ver, id, data),
-		};
+		// create resource
+		let dammit_rust = path.clone();
+		let extension = dammit_rust.extension().unwrap_or(OsStr::new("")).to_str().unwrap();
+		let res_type = Type::from_extension(extension);
+		let res      = Resource::new(name.clone(), res_type, path, ver, id, data);
 
 		// store resource
 		match self.name_map.insert(name, self.resources.len()) {
@@ -382,7 +373,7 @@ impl ResourceManager {
 pub enum Error {
 	Other(&'static str),
 	Io(io::Error),
-	Parser(json::ParserError),
+	Json(json::ParserError),
 	IsShallowResource,
 	InvalidPackage,
 	ResourceDoesNotExist,
@@ -390,42 +381,17 @@ pub enum Error {
 	ResourceWithNameAlreadyExists,
 	Ignored,
 }
-/*impl error::Error for Error {
-	fn description(&self) -> &str {
-		match self {
-			Error::Unknown              => "how hapen",
-			Error::Io(err)              => err.description(),
-			Error::Parser(err)          => err.description(),
-			Error::IsShallowResource    => "why u call from_data?", 
-			Error::InvalidPackage       => "invalid package",
-			Error::ResourceDoesNotExist => "resource does not exist",
-			Error::IncorrectVersion     => "incorrect version",
-			Error::ResourceWithNameAlreadyExists => "resource with name already exists",
-		}
-	}
-	fn cause(&self) -> Option<&Error> {
-		match self.cause {
-			Error::Io(err)     => err.cause(),
-			Error::Parser(err) => err.cause(),
-			_ => None,
-		}
-	}
-}*/ // TODO implement Error
-impl error::FromError<io::Error> for Error {
-	fn from_error(err: io::Error) -> Error {
+
+impl From<io::Error> for Error {
+	fn from(err: io::Error) -> Error {
 		Error::Io(err)
 	}
 }
-impl error::FromError<json::ParserError> for Error {
-	fn from_error(err: json::ParserError) -> Error {
-		Error::Parser(err)
+impl From<json::ParserError> for Error {
+	fn from(err: json::ParserError) -> Error {
+		Error::Json(err)
 	}
 }
-/*impl fmt::Display for Error {
-	fn fmt(&self, fmt: &mut fmt::Formatter) -> result::Result<(), fmt::Error> {
-		fmt.write_fmt("{:?}", self);
-	}
-}*/
 
 pub type Result<T> = result::Result<T, Error>;
 

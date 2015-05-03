@@ -3,7 +3,11 @@ use std::ascii::AsciiExt;
 use std::mem::transmute;
 
 pub mod vec;
-#[macro_use] pub mod json;
+pub use self::vec::{Vec2, Vec3};
+
+pub mod stuff;
+pub use self::stuff::Stuff;
+
 #[macro_use] pub mod macros;
 
 /// Removes all non-alphanumeric characters and makes all lowercase.
@@ -13,6 +17,8 @@ pub fn simplify_str(string: &str) -> String {
 		match c {
 			'a'...'z' | '0' ... '9' => res.push(c),
 			'A'...'Z' => res.push(c.to_ascii_lowercase()),
+			'-' | '_' => res.push('_'),
+			':'       => res.push(':'),
 			_ => (),
 		}
 	}
@@ -28,7 +34,7 @@ pub fn hash(data: &Vec<u8>) -> u64 {
 	for &byte in data {
 		buffer[idx % 8] = byte;
 		if idx % 8 == 0 {
-			hash ^= unsafe { transmute(buffer) };
+			hash ^= unsafe { transmute::<[u8; 8], u64>(buffer) };
 		}
 		idx = idx + 1;
 	}

@@ -1,46 +1,63 @@
 
 use std::collections::{HashMap, VecMap};
-use rustc_serialize::json::Json;
+use std::{io, result};
+use std::path::Path;
+use std::string::FromUtf8Error;
 
-use util::json::ApplyJsonResult;
-use world::container::{EntityContainer, ListContainer};
-use property_system::entity::EntityIdx;
-use resource::ResourceManager;
-use stuff::Stuff;
+use luajit_rs as lua;
+
+use world::container::{EntityContainer, ListContainer, GridContainer};
+use world::lua::LuaManager;
+use property_system::{Val, PropertySystem, EntityIdx, EntityBase};
+use resource;
+use util::{simplify_str, Stuff, Vec3};
+
+macro_rules! err {
+	($($arg:tt)*) => ({
+		panic!("Unimplemented error {}", format!($($arg)*));
+		Error::Todo
+	})
+}
+macro_rules! try_cont {
+	($expr:expr) => (match $expr {
+		Ok(val) => val,
+		Err(err) => {
+			error!("{:?}", err);
+			continue;
+		}
+	})
+}
 
 pub struct World<'a> {
+	container_protos: Vec<ContainerProto>,
 	containers: Vec<Box<EntityContainer<'a> + 'a>>,
 	container_name_map: HashMap<String, u16>,
 
 	current_entity_idx: EntityIdx,
 	entity_idx_map: HashMap<EntityIdx, (u16, u16)>,
+
+	lua_manager: LuaManager<'a>,
 }
 
-/*enum ContainerType {
+enum ContainerType {
 	List,
-	Grid(Vec3),
+	Grid(Vec3<u16>),
 }
-struct ContainerPrototype<'a> {
+struct ContainerProto {
+	ty: ContainerType,
 	name: String,
-	filename: &'a str,
-	ctype: ContainerType,
+	bases: Vec<(String, Vec<(String, Val)>)>,
 }
-impl<'a> ContainerPrototype<'a> {
-	pub fn new_list(name: String, filename: &'a str) -> ContainerPrototype<'a> {
-		ContainerPrototype { name: name, filename: filename, ctype: ContainerType::List }
-	}
-	pub fn new_grid(name: String, filename: &'a str, size: Vec3) -> ContainerPrototype<'a> {
-		ContainerPrototype { name: name, filename: filename, ctype: ContainerType::Grid(size) }
-	}
-}*/
 
 impl<'a> World<'a> {
 	pub fn new() -> World<'a> {
 		World {
+			container_protos: Vec::new(),
 			containers: Vec::new(),
 			container_name_map: HashMap::new(),
 			current_entity_idx: 0,
 			entity_idx_map: HashMap::new(),
+			lua_manager: LuaManager::new(),
 		}
 	}
 
@@ -54,131 +71,253 @@ impl<'a> World<'a> {
 		}
 	}
 
-	/// Loads world data from the resource manager.
-	/// It looks at all the jsons and does stuff.
-	/// Any time a particular value is expected to be an object or a list, a string
-	/// with a file name can be supplied instead, and the object or list is expected
-	/// to be in that file instead.
-	/// Most names are not case sensitive.
-	/// When referencing properties, bases or files from other packages, the names should 
-	/// be prefixed with the package name and a colon. Like `"doors:height"`, for example.
-	///
-	/// The starting point files are *deps.json* and *world.json*.
-	///
-	/// # deps.json
-	/// A list of the packages that should be loaded before the one this file is in.
-	/// ### Example
-	///
-	///     ["doors", "cats", "body parts"]
-	///
-	/// # world.json
-	/// A map of entity containers to add to the world.
-	/// ### Container values:
-	/// * `"type"`: Either `"list"` or `"grid"`.
-	/// * `"properties"`: A list of properties.
-	/// * `"bases"`: A list of entity bases.
-	/// * `"size"`: Only for grid containers. A length 3 list of integers for the dimensions of the grid.
-	/// ### Property values:
-	/// * `"name"`: The name of the property.
-	/// * `"type"`: Either `"int"`, `"float"`, `"bool"` or `"string"`.
-	/// * `"default"`: The default value for that property. This is optional, and if none is supplied
-	///              then int, float, bool and string properties default to `0`, `0`, `false` and `""` respectively.
-	/// ### Entity base values:
-	/// * "name": The name of the base.
-	/// * "values": A map of property names to values.
-	///
-	/// ### Example
-	///
-	///     {
-	///       "items": { "type": "list", "properties": "item_props.json", "bases": "item_bases.json" },
-	///       "phys":  {
-	///         "type": "list",
-	///         "properties": [
-	///           { "name": "x", "type": "float" },
-	///           { "name": "y", "type": "float" },
-	///           { "name": "xvel", "type": "float" },
-	///           { "name": "yvel", "type": "float" }
-	///         ],
-	///         "bases": [{ "name": "sanic", "values": { "xvel": 9999999999, "yvel": 9999999999 } }]
-	///       ]}
-	///     }
-	///
-	/// 
-	pub fn load(&mut self, resources: &ResourceManager, stuff: &mut Stuff) -> ApplyJsonResult {
-		let mut packages: VecMap<(&Json, &Json)> = VecMap::new();
-		
+	pub fn update(&mut self, seconds: f32) {
 
-		/*let json: json::Json = resources.get("world");
-		let data = json_parse!(data, "world");
-
-		let container_prototypes: Vec<ContainerPrototype> = Vec::new();
-		let containers = data.search("containers");
-		if containers.is_some() {
-			match containers.unwrap().as_object() {
-				Some(o) => self.load_json_containers(o, stuff, &containers),
-				None    => warn!("Containers is not an object."),
-			};
-		} else { warn!("World has no containers object."); }
-
-		for proto in container_prototypes {
-			load_property_system(res.get(proto.filename), stuff.get(proto.name));
-		}*/
-
-
-
-		// create containers
-
-		ApplyJsonResult::Success
 	}
 
-	/*fn load_containers(&mut self, data: &json::Object, stuff: &mut Stuff,
-	                         container_prototypes: &mut Vec<ContainerPrototype>) {
-		for (name, info) in data {
+	/// See data_format.txt
+	pub fn load(&mut self, rm: &resource::Manager, stuff: &'a mut Stuff) {
+		let mut packages: VecMap<PackageData> = VecMap::new();
 
-			let info_obj = match info.as_object() {
-				Some(o) => o,
-				None => warn_cont!("Container '{}' is not an object.", name),
+		// get all the base tomls
+		for res in rm.resources() {
+
+			// get the package for this resource
+			let pidx = res.get_name().package as usize;
+			let package = if packages.contains_key(&pidx) {
+				packages.get_mut(&pidx).unwrap()
+			} else {
+				packages.insert(res.get_name().package as usize, PackageData::new());
+				packages.get_mut(&(res.get_name().package as usize)).unwrap()
 			};
 
-			let fil = json_str!(info_obj, "file", warn_cont!("Container '{}' lacks file.", name));
-			
-			match json_str!(info_obj, "type", warn_cont!("Container '{}' has no type.", name)) {
-				"list" => container_prototypes.push(ContainerPrototype::new_list(name, fil)),
-				"grid" => {
-					let size = match info_obj.get("dim") {
-						Some(d) => Vec2::from_json(d),
-						None => warn_cont!("Container '{}' requires size 'cus a grid.", name),
-					};
-					container_prototypes.push(ContainerPrototype::new_grid(name, fil, size));
+			match res.get_type() {
+				resource::Type::Lua => {
+					match &res.get_name().id[..] {
+						"deps"  => package.deps  = Some(res.get_path()),
+						"world" => package.world = Some(res.get_path()),
+						_ => (),
+					}
 				},
-				n => warn_cont!("'{}' is not a valid container type.", n),
+				_ => (),
 			}
-
-			stuff.store(name, PropertySystem::new());
 		}
-	}*/
-}
 
-/*#[cfg(test)]
-mod test {
-	use super::*;
+		let keys: Vec<usize> = packages.keys().collect();
+		for pidx in keys {
+			let res = self.load_package(rm, stuff, &mut packages, pidx);
+			if res.is_err() {
+				error!("Failed to load package: {:?}", res.err().unwrap());
+				return;
+			}
+		}
 
-	const JSON0: &'static str = r#"
-{
-	"for": "world",
-	"containers": {
-		"Phys":  { "type": "list", "file": "phys_cont" },
-		"Item":  { "type": "list", "file": "item_cont" },
-		"Local": { "type": "list", "file": "local_cont" },
-		"Grid":  { "type": "grid", "file": "grid_cont", "size": [10, 10, 10] }
-	},
-}
-"#;
-	#[test]
-	fn test_json() {
-		let mut world = World::new();
-		world.apply_json(JSON);
-		assert!(world.get_container_with_name("Item").is_some());
-		assert!(world.get_container_with_name("Butt").is_none());
+		// finalize containers from prototypes
+		for container_proto in self.container_protos.drain() {
+			let property_system = stuff.get(&container_proto.name).unwrap();
+
+			// create container
+			let mut container: Box<EntityContainer> = match container_proto.ty {
+				ContainerType::List       => Box::new(ListContainer::new(property_system)),
+				ContainerType::Grid(size) => Box::new(GridContainer::new(property_system, size)),
+			};
+
+			// load bases
+			for (name, props) in container_proto.bases {
+				let mut base = EntityBase::new(property_system);
+				for (prop_name, val) in props {
+					let property = try_cont!(property_system.with_name(&prop_name).ok_or(
+						Error::UnknownProp(prop_name, container_proto.name.clone())));
+
+					// assert correct type
+					if !property.get_type().is_same_type(&val)
+						{ try_cont!(Err(Error::WrongType(val.clone(), property.get_type()))); }
+
+					base.set_value(property.get_index(), val);
+				}
+				container.add_base(name, base);
+			}
+			self.containers.push(container);
+		}
 	}
-}*/
+
+	fn load_package(&mut self, rm: &resource::Manager, stuff: &mut Stuff,
+	                packages: &mut VecMap<PackageData>, pidx: usize) -> Result<()> {
+		// could be already loaded
+		if packages[pidx].loaded { return Ok(()); }
+		packages[pidx].loaded = true;
+
+		info!("Loading package '{}'.", rm.get_package(pidx as u32).name);
+
+		let l = lua::State::new();
+		l.load_file("data/sandbox.lua").ok().expect("sandbox.lua failed to load").call_(());
+		let mut sandbox: lua::TableRef = l.get("env").expect("sandbox.lua has no env");
+
+		// load dependencies
+		sandbox.set("deps", lua::EmptyTable);
+		if packages[pidx].deps.is_some() {
+			let deps_table: lua::TableRef = sandbox.get("deps").unwrap();
+			let func = try!(l.load_file(packages[pidx].deps.unwrap()));
+			deps_table.set_as_env(&func);
+			func.call_(());
+			for (dep_name, value) in deps_table.iter::<String, bool>() {
+				if !value { continue; }
+				let dependency_idx = rm.package_name_to_idx(&dep_name[..]);
+				let dependency_idx = try!(dependency_idx.ok_or(Error::NotPackage(dep_name)));
+				try!(self.load_package(rm, stuff, packages, dependency_idx as usize));
+			}
+		}
+
+		// load world
+		sandbox.set("world", lua::EmptyTable);
+		if packages[pidx].world.is_some() {
+			let world_table: lua::TableRef = sandbox.get("world").unwrap();
+			let func = try!(l.load_file(packages[pidx].world.unwrap()));
+			world_table.set_as_env(&func);
+			func.call_(());
+			try!(self.load_world(stuff, world_table));
+		}
+
+		Ok(())
+	}
+
+	fn load_world(&mut self, stuff: &mut Stuff, world: lua::TableRef) -> Result<()> {
+		for (name, table) in world.iter::<String, lua::TableRef>() {
+			let name  = simplify_str(&name[..]);
+			let ty    = try!(self.load_container_type(&name[..], &table));
+			let bases = match table.get::<lua::TableRef>("bases") {
+				Some(bases_table) => try!(self.load_bases(&bases_table)),
+				None => Vec::new(),
+			};
+			match table.get("properties") {
+				Some(props_table) => try!(self.load_props(&name[..], &props_table, stuff)),
+				None => (),
+			}
+			self.container_name_map.insert(name.clone(), self.container_protos.len() as u16);
+			self.container_protos.push(ContainerProto { ty: ty, name: name, bases: bases });
+		}
+		Ok(())
+	}
+
+	fn load_container_type(&self, name: &str, table: &lua::TableRef) -> Result<ContainerType> {
+		let ty = table.get::<String>("type").ok_or(Error::ContainerLacksType(name.to_string()));
+		match &simplify_str(&try!(ty)[..])[..] {
+			"list" => Ok(ContainerType::List),
+			"grid" => match table.get::<Vec<u16>>("size") {
+				Some(size) => match size.len() {
+					2 => Ok(ContainerType::Grid(Vec3::new(size[0], size[1], 1))),
+					3 => Ok(ContainerType::Grid(Vec3::new(size[0], size[1], size[2]))),
+					_ => Err(Error::InvalidGridSize(name.to_string())),
+				},
+				None  => Err(Error::InvalidGridSize(name.to_string())),
+			},
+			tn => Err(Error::InvalidContainerType(tn.to_string(), name.to_string())),
+		}
+	}
+
+	fn load_bases(&self, table: &lua::TableRef) -> Result<Vec<(String, Vec<(String, Val)>)>> {
+		let mut bases = Vec::new();
+		for (name, base_table) in table.iter::<String, lua::TableRef>() {
+			let mut base = Vec::new();
+			for (prop, val) in base_table.iter::<String, lua::AnyRef>() {
+				let val = match val {
+					lua::AnyRef::Bool(v) => Val::Bool(v),
+					lua::AnyRef::Num(v)  => Val::Float(v),
+					lua::AnyRef::Str(v) => Val::Str(Box::new(v.as_str().to_string())),
+					_ => return Err(Error::InvalidLiteral(format!("{:?}", val), prop, name)),
+				};
+				base.push((prop, val));
+			}
+			bases.push((name, base));
+		}
+		Ok(bases)
+	}
+
+	fn load_props(&self, cname: &str, table: &lua::TableRef, stuff: &mut Stuff) -> Result<()> {
+		let mut property_system = PropertySystem::new();
+		for prop_table in table.array_iter::<lua::TableRef>() {
+			let name = match prop_table.get::<String>("name") {
+				Some(str) => str,
+				None => return Err(Error::PropertyLacksName(cname.to_string())),
+			};
+			let type_name = prop_table.get::<String>("type");
+			let tn = type_name.ok_or(Error::PropertyLacksType(name.clone(), cname.to_string()));
+			let mut val = match &simplify_str(&try!(tn)[..])[..] {
+				"bool"   => Val::Bool(false),
+				"float"  => Val::Float(0.),
+				"int"    => Val::Int(0),
+				"string" => Val::Str(Box::new(String::new())),
+				ty => return Err(Error::InvalidType(ty.to_string(), name, cname.to_string())),
+			};
+			if prop_table.get::<lua::AnyRef>("default").is_some() {
+				val = match val {
+					Val::Bool(_)  => Val::Bool(try!(prop_table.get("default").ok_or(
+						Error::InvalidDefault("bool", name.clone())))),
+					Val::Float(_) => Val::Float(try!(prop_table.get("default").ok_or(
+						Error::InvalidDefault("float", name.clone())))),
+					Val::Int(_)   => Val::Int(try!(prop_table.get("default").ok_or(
+						Error::InvalidDefault("int", name.clone())))),
+					Val::Str(_)   => Val::Str(Box::new(try!(prop_table.get("default").ok_or(
+						Error::InvalidDefault("str", name.clone()))))),
+				};
+			}
+			property_system.add(name, val);
+		}
+		stuff.insert(cname.to_string(), property_system);
+		Ok(())
+	}
+}
+
+struct PackageData<'a> {
+	deps:   Option<&'a Path>,
+	world:  Option<&'a Path>,
+	loaded: bool,
+}
+impl<'a> PackageData<'a> {
+	pub fn new() -> PackageData<'a> {
+		PackageData { deps: None, world: None, loaded: false }
+	}
+}
+
+#[derive(Debug)]
+pub enum Error {
+	Todo,
+	UnknownProp(String, String),            // (property name, container name)
+	WrongType(Val, Val),                    // (is, should be)
+	NotPackage(String),                     // (dependency name)
+	ContainerLacksType(String),             // (container name)
+	InvalidGridSize(String),                // (container name)
+	InvalidContainerType(String, String),   // (type name, container name)
+	InvalidLiteral(String, String, String), // (literal, property name, base name)
+	PropertyLacksName(String),              // (container name)
+	PropertyLacksType(String, String),      // (property name, container name)
+	InvalidType(String, String, String),    // (type name, property name, container name)
+	InvalidDefault(&'static str, String),   // (type, property name)
+
+	Io(io::Error),
+	Utf8(FromUtf8Error),
+	Res(resource::Error),
+	Lua(lua::Error),
+}
+impl From<io::Error> for Error {
+	fn from(err: io::Error) -> Error {
+		Error::Io(err)
+	}
+}
+impl From<FromUtf8Error> for Error {
+	fn from(err: FromUtf8Error) -> Error {
+		Error::Utf8(err)
+	}
+}
+impl From<resource::Error> for Error {
+	fn from(err: resource::Error) -> Error {
+		Error::Res(err)
+	}
+}
+impl From<lua::Error> for Error {
+	fn from(err: lua::Error) -> Error {
+		Error::Lua(err)
+	}
+}
+
+pub type Result<T> = result::Result<T, Error>;

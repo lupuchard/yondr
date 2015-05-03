@@ -2,7 +2,7 @@
 use std::collections::HashMap;
 use anymap::AnyMap;
 use std::fmt::Debug;
-use std::hash::Hash;
+use std::marker::Reflect;
 
 /// Store anything with a string key.
 pub struct Stuff {
@@ -13,8 +13,8 @@ impl Stuff {
 		Stuff { stuff: AnyMap::new() }
 	}
 
-	pub fn insert<K: 'static+Debug+Eq+Hash, V: 'static+Debug>(&mut self, key: K, val: V) {
-		match self.stuff.get_mut::<HashMap<K, V>>() {
+	pub fn insert<V: 'static+Debug+Reflect>(&mut self, key: String, val: V) {
+		match self.stuff.get_mut::<HashMap<String, V>>() {
 			Some(map) => {
 				if map.contains_key(&key) {
 					warn!("Cat't store {:?}, since {:?} already exists in Stuff.", val, key);
@@ -25,14 +25,14 @@ impl Stuff {
 			},
 			None => (),
 		}
-		let mut map: HashMap<K, V> = HashMap::new();
+		let mut map: HashMap<String, V> = HashMap::new();
 		map.insert(key, val);
 		self.stuff.insert(map);
 	}
 
-	pub fn remove<K: 'static+Eq+Hash, V: 'static>(&mut self, key: K) -> Option<V> {
-		match self.stuff.get_mut::<HashMap<K, V>>() {
-			Some(map) => match map.remove(&key) {
+	pub fn remove<V: 'static+Reflect>(&mut self, key: &str) -> Option<V> {
+		match self.stuff.get_mut::<HashMap<String, V>>() {
+			Some(map) => match map.remove(key) {
 				Some(v) => Some(v),
 				None => None,
 			},
@@ -40,9 +40,9 @@ impl Stuff {
 		}
 	}
 
-	pub fn get<K: 'static+Eq+Hash, V: 'static>(&self, key: K) -> Option<&V> {
-		match self.stuff.get::<HashMap<K, V>>() {
-			Some(map) => match map.get(&key) {
+	pub fn get<V: 'static+Reflect>(&self, key: &str) -> Option<&V> {
+		match self.stuff.get::<HashMap<String, V>>() {
+			Some(map) => match map.get(key) {
 				Some(v) => Some(v),
 				None => None,
 			},

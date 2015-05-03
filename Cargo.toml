@@ -12,13 +12,18 @@ name = "server"
 path = "src/server_main.rs"
 
 [dependencies]
-anymap = "0.9"
-log = "0.2"
-ansi_term = "*"
-num = "*"
-#wire = "0.0.9"
-bincode = "0.0.10"
+anymap          = "0.10"
+log             = "0.3"
+ansi_term       = "0.5"
+num             = "0.1"
+time            = "0.1"
+#wire           = "0.0.9"
+bincode         = "0.1"
 rustc-serialize = "0.3"
 
 [dependencies.wire]
-git = "https://github.com/TyOverby/wire"
+git = "https://github.com/TyOverby/wire.git"
+rev = "a19e1a21e4ecfd6b315968ff1a526016606a26f9"
+
+[dependencies.luajit-rs]
+path = "../luajit_rs"

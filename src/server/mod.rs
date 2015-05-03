@@ -3,34 +3,38 @@ use std::thread;
 use std::path::Path;
 use std::sync::Arc;
 use std::net::{UdpSocket, SocketAddr};
+
 use wire;
 use wire::{InTcpStream, OutTcpStream};
+use time::PreciseTime;
 
-use network_shared::{SMessage, CMessage, Result, Error};
-use resource::ResourceManager;
-use stuff::Stuff;
+use network_shared::{LOGICAL_FPS, SMessage, CMessage, Result, Error};
+use resource;
+use util::Stuff;
 use world::World;
 
 
 pub fn listen(port: u16) {
-	let server = Server::new();
+	let mut server = Server::new();
+
+	let mut stuff = Stuff::new();
+	let mut world = World::new();
+	world.load(&server.rm, &mut stuff);
+
+	server.logic_loop(&mut world);
 	server.listen(port);
 }
 
 #[derive(Clone)]
 struct Server {
-	rm: Arc<ResourceManager>,
+	rm: Arc<resource::Manager>,
 	packages: Arc<Vec<u32>>,
-	
-	//world: Arc<World<'a>>,
-	//stuff: Arc<Stuff>,
-	//request_buffer: RWArc<HashMap<SockAddr, Vec<Request>>,
 }
 impl Server {
 	fn new() -> Server {
 
 		// load data
-		let mut rm = ResourceManager::new(&Path::new("gamedata")).unwrap();
+		let mut rm = resource::Manager::new(&Path::new("gamedata")).unwrap();
 		let packages = rm.packages().iter().map(|p| -> u32 { p.idx }).collect();
 		for &package in &packages {
 			info!("Loading package {}...", rm.get_package(package).name);
@@ -40,19 +44,28 @@ impl Server {
 			}
 		}
 
-		// set up world
-		let mut world = World::new();
-		let mut stuff = Stuff::new();
-		world.load(&rm, &mut stuff);
-
 		Server {
-			rm:         Arc::new(rm),
-			packages:    Arc::new(packages),
-			//world:        Arc::new(world),
-			//stuff:         Arc::new(stuff),
-			//request_buffer: Arc::new(HashMap::new()),
+			rm:       Arc::new(rm),
+			packages: Arc::new(packages),
 		}
 	}
+
+	fn logic_loop<'a>(&mut self, world: &mut World<'a>) {
+		let mut prev = PreciseTime::now();
+		loop {
+			let now  = PreciseTime::now();
+			let diff = prev.to(now).num_milliseconds() as i32;
+			if diff > 1000i32 / LOGICAL_FPS {
+				world.update(diff as f32 / 1000f32);
+			} else {
+				thread::sleep_ms(((1000i32 / LOGICAL_FPS) - diff) as u32);
+				let diff = prev.to(PreciseTime::now()).num_milliseconds();
+				world.update(diff as f32 / 1000f32);
+			}
+			prev = now;
+		}
+	}
+
 	fn listen(&self, port: u16) {
 		let (listener, _) = wire::listen_tcp(("localhost", port)).unwrap();
 		let udp_sock      = UdpSocket::bind(&("localhost", port)).unwrap();

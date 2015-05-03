@@ -1,11 +1,14 @@
 
-use std::{io, error, result};
+use std::{io, result};
 use std::string::FromUtf8Error;
 use bincode;
 use wire::SizeLimit;
 
-use resource::{SessionID, ResourceType};
+use resource::SessionID;
 use resource;
+
+pub const LOGICAL_FPS: i32 = 60;
+pub const NETWORK_FPS: i32 = 20;
 
 /// Messages the Server can send to the Client over TCP.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, RustcDecodable, RustcEncodable)]
@@ -19,15 +22,15 @@ pub enum SMessage {
 	CheckResources(Vec<(String, String, u64, SessionID)>),
 
 	/// The data for a particular resource.
-	Resource(SessionID, ResourceType, Vec<u8>),
+	Resource(SessionID, resource::Type, Vec<u8>),
 
 	Chat(String),
 	Goodbye(String),
 }
 impl SMessage {
+	/// The maximum size of a serialized SMessage.
 	pub fn limit() -> SizeLimit { SizeLimit::Infinite }
 
-	// this is so fucking dumb
 	// i cant believe enums dont already come with these methods
 	pub fn as_welcome(self)         -> Option<(bool, String)> {
 		match self { SMessage::Welcome(b, s)     => Some((b, s)),    _ => None }
@@ -35,7 +38,7 @@ impl SMessage {
 	pub fn as_check_resources(self) -> Option<Vec<(String, String, u64, SessionID)>> {
 		match self { SMessage::CheckResources(v) => Some(v),         _ => None }
 	}
-	pub fn as_resource(self)        -> Option<(SessionID, ResourceType, Vec<u8>)> {
+	pub fn as_resource(self)        -> Option<(SessionID, resource::Type, Vec<u8>)> {
 		match self { SMessage::Resource(s, t, v) => Some((s, t, v)), _ => None }
 	}
 }
@@ -54,6 +57,7 @@ pub enum CMessage {
 	Goodbye(String),
 }
 impl CMessage {
+	/// The maximum size of a serialized CMessage.
 	pub fn limit() -> SizeLimit { SizeLimit::Bounded(1024) }
 
 	pub fn as_request_resources<'a>(self)->Option<Vec<SessionID>> {
@@ -63,38 +67,6 @@ impl CMessage {
 		match self { CMessage::Ready => true, _ => false }
 	}
 }
-/*impl<'a> SMessage<'a> {
-	pub fn parse(message: &'a str) -> Result<Message<'a>> {
-		let v: Vec<&str> = message.splitn(2, ':').collect();
-		if v.len() < 2 { return Err(Error::ParseError("Missing colon.")); }
-
-		match v[0] {
-			"WELCOME" => Message::parse_welcome(v[1]),
-			_ => Err(Error::ParseError("Unknown message type.")),
-		}
-	}
-	fn parse_welcome(message: &'a str) -> Result<Message<'a>> {
-		let v: Vec<&str> = message.splitn(2, '(').collect();
-		if v.len() < 1 { return Err(Error::ParseError("Empty message.")); }
-
-		let status = match v[0].trim_matches(' ') {
-			"yes" => true,
-			"no"  => false,
-			_ => return Err(Error::ParseError("Unknown welcome status.")),
-		};
-		match v.len() {
-			1 => Ok(Message::Welcome(status, "")),
-			_ => Ok(Message::Welcome(status, v[1].trim_right_matches(')'))),
-		}
-	}
-
-	pub fn as_welcome(self) -> Result<(bool, &'a str)> {
-		match self {
-			Message::Welcome(b, s) => Ok((b, s)),
-			//_ => Err(Error::UnexpectedMessageType),
-		}
-	}
-}*/
 
 pub type Result<T> = result::Result<T, Error>;
 
@@ -107,28 +79,28 @@ pub enum Error {
 	WrongMessage,
 	Rejected,
 }
-impl error::FromError<io::Error> for Error {
-	fn from_error(err: io::Error) -> Error {
+impl From<io::Error> for Error {
+	fn from(err: io::Error) -> Error {
 		Error::Io(err)
 	}
 }
-impl error::FromError<FromUtf8Error> for Error {
-	fn from_error(err: FromUtf8Error) -> Error {
+impl From<FromUtf8Error> for Error {
+	fn from(err: FromUtf8Error) -> Error {
 		Error::Utf8(err)
 	}
 }
-impl error::FromError<resource::Error> for Error {
-	fn from_error(err: resource::Error) -> Error {
+impl From<resource::Error> for Error {
+	fn from(err: resource::Error) -> Error {
 		Error::Res(err)
 	}
 }
-impl error::FromError<bincode::DecodingError> for Error {
-	fn from_error(_: bincode::DecodingError) -> Error {
+impl From<bincode::DecodingError> for Error {
+	fn from(_: bincode::DecodingError) -> Error {
 		Error::Bincode
 	}
 }
-impl error::FromError<bincode::EncodingError> for Error {
-	fn from_error(_: bincode::EncodingError) -> Error {
+impl From<bincode::EncodingError> for Error {
+	fn from(_: bincode::EncodingError) -> Error {
 		Error::Bincode
 	}
 }

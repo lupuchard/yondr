@@ -1,9 +1,6 @@
-
 use std::collections::HashMap;
 
 use property_system::property::{Val, PropertyIdx, PropertySystem};
-use name::Name;
-
 
 pub type EntityIdx     = u16;
 pub type EntityBaseIdx = u16;
@@ -64,7 +61,7 @@ impl<'a> Entity<'a> {
 			None    => self.base.get_ref(property_index),
 		}
 	}
-	pub fn get_ref_by_name(&self, name: &Name) -> Option<&Val> {
+	pub fn get_ref_by_name(&self, name: &str) -> Option<&Val> {
 		match self.base.get_system().name_to_index(name) {
 			Some(i) => Some(self.get_ref(i)),
 			None    => None,
@@ -77,7 +74,7 @@ impl<'a> Entity<'a> {
 			None    => self.base.get_value(property_index),
 		}
 	}
-	pub fn get_value_by_name(&self, name: &Name) -> Option<Val> {
+	pub fn get_value_by_name(&self, name: &str) -> Option<Val> {
 		match self.base.get_system().name_to_index(name) {
 			Some(i) => Some(self.get_value(i)),
 			None    => None,
@@ -93,7 +90,7 @@ impl<'a> Entity<'a> {
 
 		self.values.insert(property_index, value);
 	}
-	pub fn set_value_by_name(&mut self, name: &Name, value: Val) {
+	pub fn set_value_by_name(&mut self, name: &str, value: Val) {
 		match self.base.get_system().name_to_index(name) {
 			Some(p) => self.set_value(p, value),
 			_ => (), // TODO: what to do on fail?
@@ -105,24 +102,23 @@ impl<'a> Entity<'a> {
 mod test {
 	use super::*;
 	use property_system::{PropertySystem, Val};
-	use name::Name;
 
 	#[test]
 	fn entity() {
 		let mut props = PropertySystem::new();
-		let tits  = props.add(Name::new("titanium", 0), Val::Int(0));
+		let tits  = props.add("titanium".to_string(), Val::Int(0));
 		let black = Val::new_str("black");
-		let color = props.add(Name::new("fav_color", 0), black.clone());
+		let color = props.add("fav_color".to_string(), black.clone());
 
 		let mut base = EntityBase::new(&props);
 		base.set_value(tits, Val::Int(4));
 
 		let mut entity = Entity::new(&base, 0);
 		assert_eq!(entity.get_ref(tits), &Val::Int(4));
-		assert_eq!(entity.get_ref_by_name(&Name::new("fav_color", 0)).unwrap(), &black);
+		assert_eq!(entity.get_ref_by_name("fav_color").unwrap(), &black);
 
 		entity.set_value(tits, Val::Int(6));
-		entity.set_value_by_name(&Name::new("fav_color", 0), black.clone());
+		entity.set_value_by_name("fav_color", black.clone());
 		assert_eq!(entity.get_value(color), black);
 	}
 
@@ -130,7 +126,7 @@ mod test {
 	#[should_panic]
 	fn thing_fail() {
 		let mut props = PropertySystem::new();
-		let soda = props.add(Name::new("soda", 1), Val::Int(0));
+		let soda = props.add("soda".to_string(), Val::Int(0));
 		let base = EntityBase::new(&props);
 		let mut entity = Entity::new(&base, 0);
 

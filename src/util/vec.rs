@@ -1,9 +1,10 @@
 use std::ops::{Add, Sub, Mul, Div, Neg, Rem};
-use std::num::{Float, NumCast, cast};
+//use std::num::{Float, NumCast, cast};
+use num::traits::{Float, NumCast, cast};
 use num::{Num, Signed, Unsigned, Zero, One, zero, one};
 
 /// Vec2 is a two dimensional vector for dimensions and positions and vector math and stuff.
-#[derive(Copy, Default, Debug, PartialEq, PartialOrd, Hash)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, Hash)]
 pub struct Vec2<T> {
 	pub x: T,
 	pub y: T,
@@ -84,9 +85,26 @@ impl<T: Rem<Output=T> + Copy> Rem<T> for Vec2<T> {
 }
 
 // make it official
-impl<T: Num> Num for Vec2<T> { }
-impl<T: Unsigned> Unsigned for Vec2<T> { }
-impl<T: Signed> Signed for Vec2<T> {
+impl<E, T: Copy+Num<FromStrRadixErr=E>> Num for Vec2<T> {
+	type FromStrRadixErr = E;
+	fn from_str_radix(str: &str, radix: u32) -> Result<Self, E> {
+		let split: Vec<&str> = str.split(',').collect();
+		match split.len() {
+			0 => Ok(Vec2::new(zero(), zero())),
+			1 => {
+				let val = try!(T::from_str_radix(str, radix));
+				Ok(Vec2::new(val, val))
+			},
+			_ => {
+				let val1 = try!(T::from_str_radix(split[0], radix));
+				let val2 = try!(T::from_str_radix(split[1], radix));
+				Ok(Vec2::new(val1, val2))
+			},
+		}
+	}
+}
+impl<T: Copy+Unsigned> Unsigned for Vec2<T> { }
+impl<T: Copy+Signed> Signed for Vec2<T> {
 	fn signum(&self) -> Self { Vec2::new(self.x.signum(), self.y.signum()) }
 	fn abs(&self)    -> Self { Vec2::new(self.x.abs()   , self.y.abs())    }
 	fn abs_sub(&self, other: &Self) -> Self {
@@ -98,7 +116,7 @@ impl<T: Signed> Signed for Vec2<T> {
 
 
 /// Vec3 is a three dimensional vector for dimensions and positions and vector math and stuff.
-#[derive(Copy, Default, Debug, PartialEq, PartialOrd, Hash)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, Hash)]
 pub struct Vec3<T> {
 	pub x: T,
 	pub y: T,
@@ -180,9 +198,32 @@ impl<T: Rem<Output=T> + Copy> Rem<T> for Vec3<T> {
 }
 
 // make it official
-impl<T: Num> Num for Vec3<T> { }
-impl<T: Unsigned> Unsigned for Vec3<T> { }
-impl<T: Signed> Signed for Vec3<T> {
+impl<E, T: Copy+Num<FromStrRadixErr=E>> Num for Vec3<T> {
+	type FromStrRadixErr = E;
+	fn from_str_radix(str: &str, radix: u32) -> Result<Self, E> {
+		let split: Vec<&str> = str.split(',').collect();
+		match split.len() {
+			0 => Ok(Vec3::new(zero(), zero(), zero())),
+			1 => {
+				let val = try!(T::from_str_radix(str, radix));
+				Ok(Vec3::new(val, val, val))
+			},
+			2 => {
+				let val1 = try!(T::from_str_radix(split[0], radix));
+				let val2 = try!(T::from_str_radix(split[1], radix));
+				Ok(Vec3::new(val1, val2, val2))
+			},
+			_ => {
+				let val1 = try!(T::from_str_radix(split[0], radix));
+				let val2 = try!(T::from_str_radix(split[1], radix));
+				let val3 = try!(T::from_str_radix(split[2], radix));
+				Ok(Vec3::new(val1, val2, val3))
+			},
+		}
+	}
+}
+impl<T: Copy+Unsigned> Unsigned for Vec3<T> { }
+impl<T: Copy+Signed> Signed for Vec3<T> {
 	fn signum(&self) -> Self { Vec3::new(self.x.signum(), self.y.signum(), self.z.signum()) }
 	fn abs(&self)    -> Self { Vec3::new(self.x.abs()   , self.y.abs()   , self.z.abs())    }
 	fn abs_sub(&self, other: &Self) -> Self {
