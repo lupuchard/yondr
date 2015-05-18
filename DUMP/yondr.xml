@@ -1,0 +1,23 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+		<Compile Include="Val.cs" />
+		<Compile Include="PropertySystem.cs" />
+		<Compile Include="Server.cs" />
+		<Test Include="Tests/PropertySystemTest.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="lib/framework/nunit.framework.dll" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<Configuration>Debug</Configuration>
+	</PropertyGroup>
+
+	<Target Name="Build">
+		<Csc Sources="@(Compile)" />
+	</Target>
+	<Target Name="Test">
+		<Csc Sources="@(Compile);@(Test)" References="@(Reference)" OutputAssembly="Tests/tests"/>
+	</Target>
+</Project>

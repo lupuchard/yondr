@@ -1,0 +1,26 @@
+items:
+  properties:
+    - name: color
+      type: string
+      default: "unknown"
+    - name: taste
+      type: string
+      default: "inedible"
+    - name: nutrition
+      type: float
+  bases: items.yaml
+
+grid:
+  type: grid
+  dim: [10, 10, 10]
+  properties:
+    - name: x
+      type: float
+    - name: y
+      type: float
+    - name: xvel
+      type: float
+    - name: yvel
+      type: float
+  bases:
+    - sanic: {Xvel: 999999, yvel: 999999}

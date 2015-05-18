@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "server", "server\server.csproj", "{F9555BF1-A267-4640-92B9-743DB969E92F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "client\client.csproj", "{DE054871-07FE-4482-A8CD-163AAC696822}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "yondr", "yondr\yondr.csproj", "{F09AF069-6A17-4877-99BB-4CA915B49F64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE054871-07FE-4482-A8CD-163AAC696822}.Debug|x86.ActiveCfg = Debug|x86
+		{DE054871-07FE-4482-A8CD-163AAC696822}.Debug|x86.Build.0 = Debug|x86
+		{DE054871-07FE-4482-A8CD-163AAC696822}.Release|x86.ActiveCfg = Release|x86
+		{DE054871-07FE-4482-A8CD-163AAC696822}.Release|x86.Build.0 = Release|x86
+		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Debug|x86.ActiveCfg = Debug|x86
+		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Debug|x86.Build.0 = Debug|x86
+		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Release|x86.ActiveCfg = Release|x86
+		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Release|x86.Build.0 = Release|x86
+		{F9555BF1-A267-4640-92B9-743DB969E92F}.Debug|x86.ActiveCfg = Debug|x86
+		{F9555BF1-A267-4640-92B9-743DB969E92F}.Debug|x86.Build.0 = Debug|x86
+		{F9555BF1-A267-4640-92B9-743DB969E92F}.Release|x86.ActiveCfg = Release|x86
+		{F9555BF1-A267-4640-92B9-743DB969E92F}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		Policies = $0
+		$0.DotNetNamingPolicy = $1
+		$1.DirectoryNamespaceAssociation = None
+		$1.ResourceNamePolicy = FileFormatDefault
+		$0.TextStylePolicy = $2
+		$2.FileWidth = 100
+		$2.TabsToSpaces = False
+		$2.NoTabsAfterNonTabs = True
+		$2.inheritsSet = VisualStudio
+		$2.inheritsScope = text/plain
+		$2.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $3
+		$3.IndentNamespaceBody = False
+		$3.NamespaceBraceStyle = EndOfLine
+		$3.ClassBraceStyle = EndOfLine
+		$3.InterfaceBraceStyle = EndOfLine
+		$3.StructBraceStyle = EndOfLine
+		$3.EnumBraceStyle = EndOfLine
+		$3.MethodBraceStyle = EndOfLine
+		$3.ConstructorBraceStyle = EndOfLine
+		$3.DestructorBraceStyle = EndOfLine
+		$3.EmbeddedStatementPlacement = DoNotCare
+		$3.BeforeMethodDeclarationParentheses = False
+		$3.BeforeMethodCallParentheses = False
+		$3.BeforeConstructorDeclarationParentheses = False
+		$3.BeforeIndexerDeclarationBracket = False
+		$3.BeforeDelegateDeclarationParentheses = False
+		$3.AfterDelegateDeclarationParameterComma = True
+		$3.NewParentheses = False
+		$3.SpacesBeforeBrackets = False
+		$3.inheritsSet = Mono
+		$3.inheritsScope = text/x-csharp
+		$3.scope = text/x-csharp
+	EndGlobalSection
+EndGlobal

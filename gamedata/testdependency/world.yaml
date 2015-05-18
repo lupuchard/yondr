@@ -1,0 +1,13 @@
+items:
+  type: list
+  properties:
+    - 
+      name: weight
+      type: float
+    - 
+      name: name
+      type: string
+    - 
+      name: description
+      type: string
+      default: "Nondescript"
