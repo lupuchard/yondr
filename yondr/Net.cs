@@ -97,8 +97,6 @@ public static class Net {
 	}
 	public static T ReceiveMessage<T>(TcpClient tcp) {
 		IFormatter formatter = new BinaryFormatter();
-
-		// TODO: EndOfStreamException when disconnected
 		return (T)formatter.Deserialize(tcp.GetStream());
 	}
 }

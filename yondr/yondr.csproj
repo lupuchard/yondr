@@ -9,6 +9,9 @@
     <OutputType>Library</OutputType>
     <RootNamespace>yondr</RootNamespace>
     <AssemblyName>yondrs</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>yondr.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -41,9 +44,11 @@
     <Compile Include="Res\ResourceManager.cs" />
     <Compile Include="World\Container.cs" />
     <Compile Include="World\World.cs" />
-    <Compile Include="Log.cs" />
     <Compile Include="Net.cs" />
     <Compile Include="SerializableDictionary.cs" />
+    <Compile Include="ScriptManager.cs" />
+    <Compile Include="Log.cs" />
+    <Compile Include="ScriptContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />
@@ -58,5 +63,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\script-helper\script-helper.csproj">
+      <Project>{95FC67BD-EC57-4123-94B3-72E66723D0AD}</Project>
+      <Name>script-helper</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\script-context\script-context.csproj">
+      <Project>{A73EDE74-5D87-4702-BC75-4B11BA685E86}</Project>
+      <Name>script-context</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

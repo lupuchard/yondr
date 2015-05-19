@@ -19,25 +19,23 @@ public class World {
 		return containerD[name];
 	}
 
-	/*public void Init() {
-		Lua.Init();
+	public void Init() {
+		scripts.Init();
 	}
 	public void Update(double secs) {
-		Lua.Update(secs);
+		scripts.Update(secs);
 	}
 	public void Exit() {
-		Lua.Exit();
-	}*/
+		scripts.Exit();
+	}
 
 	// When parsing a non-scalar, it should accept
 	// strings as other yaml resources to import.
 	private class ImportNodeDeserializer: INodeDeserializer {
 		private Deserializer deserializer;
-		private Res.Manager  resources;
-		private int package;
-		public ImportNodeDeserializer(Deserializer d, Res.Manager res, int p) {
+		private Res.Package package;
+		public ImportNodeDeserializer(Deserializer d, Res.Package p) {
 			deserializer = d;
-			resources = res;
 			package = p;
 		}
 
@@ -54,14 +52,13 @@ public class World {
 				return false;
 			}
 			var resName = StringUtil.Simplify(Path.GetFileNameWithoutExtension(scalar.Value));
-			var res     = resources.ResourceDictionary[new Res.Name(resName, package)];
+			var res = package.Resources[resName];
 			if (res.Type != Res.Type.YAML) {
 				throw new YamlException(scalar.Start, scalar.End,
 				                        String.Format("Resource {0} is not yaml.", resName));
 			} else if (res.Used) {
-				Log.Info(res.Name.ID);
 				throw new YamlException(scalar.Start, scalar.End,
-				                        String.Format("Circular dependency?", res.Path));
+				                        String.Format("Circular dependency? {0}", res.Path));
 			}
 			res.Used = true;
 			var input = new StreamReader(res.Path);
@@ -101,59 +98,60 @@ public class World {
 		public Dictionary<string, Dictionary<string, string>>[] Bases { get; set; } = null;
 	}
 	private class PackageData {
+		public PackageData(Res.Package package) {
+			this.package = package;
+		}
+		public Res.Package package;
 		public string deps   = null;
 		public string world  = null;
 		public string events = null;
 		public bool loaded   = false;
 	}
 	public void Load(Res.Manager resourceManager) {
-		var packages = new Dictionary<int, PackageData>();
+		var packages = new Dictionary<string, PackageData>();
 
 		// Get all important data resources.
-		foreach (Res.Res res in resourceManager.Resources) {
-			PackageData package;
-			if (!packages.TryGetValue(res.Name.Package, out package)) {
-				package = new PackageData();
-				packages.Add(res.Name.Package, package);
-			}
-
-			switch (res.Type) {
-				case Res.Type.YAML: {
-					switch (res.Name.ID) {
-						case "deps":   package.deps   = res.Path; break;
-						case "world":  package.world  = res.Path; break;
-						case "events": package.events = res.Path; break;
-						default: continue;
-					}
-					res.Used = true;
-				} break;
-				default: continue;
+		foreach (Res.Package package in resourceManager.Packages.Values) {
+			var packageData = new PackageData(package);
+			packages.Add(package.Name, packageData);
+			foreach (Res.Res res in package.Resources.Values) {
+				switch (res.Type) {
+					case Res.Type.YAML: {
+						switch (res.Name) {
+							case "deps":   packageData.deps   = res.Path; break;
+							case "world":  packageData.world  = res.Path; break;
+							case "events": packageData.events = res.Path; break;
+							default: continue;
+						}
+						res.Used = true;
+					} break;
+					default: continue;
+				}
 			}
 		}
-		foreach (int index in packages.Keys) {
-			loadPackage(resourceManager, packages, index);
+		foreach (var packageData in packages.Values) {
+			loadPackage(packages, packageData.package);
 		}
 		foreach (EntityContainer container in containers) {
 			container.UpdateBases();
 		}
 	}
-	private void loadPackage(Res.Manager resourceManager,
-	                         Dictionary<int, PackageData> packages, int index) {
+	private void loadPackage(Dictionary<string, PackageData> packages, Res.Package package) {
 		// could already be loaded
-		if (packages[index].loaded) return;
-		var package = packages[index];
-		package.loaded = true;
-		string packageName = resourceManager.Packages[index].Name;
+		var packageData = packages[package.Name];
+		if (packageData.loaded) return;
+		packageData.loaded = true;
 		
-		Log.Info("Loading package {0}.", packageName);
+		Log.Info("Loading package {0}.", package.Name);
 		
+		// gotta deserialize the yamls
 		var deserializer = new Deserializer(namingConvention: new HyphenatedNamingConvention());
 		
 		// insert ImportNodeDeserializer and EnumNodeSerializer before the ScalarNodeDeserializer
 		int scalarIdx = deserializer.NodeDeserializers.Select((d, i) => new {D=d, I=i}).
 		                First(d => d.D is ScalarNodeDeserializer).I;
 		deserializer.NodeDeserializers.Insert(scalarIdx, new EnumNodeDeserializer());
-		var inputNodeDeserializer = new ImportNodeDeserializer(deserializer, resourceManager, index);
+		var inputNodeDeserializer = new ImportNodeDeserializer(deserializer, package);
 		deserializer.NodeDeserializers.Insert(scalarIdx, inputNodeDeserializer);
 
 		// insert VecNodeDeserializer before ObjectNodeDeserializer
@@ -162,15 +160,15 @@ public class World {
 		deserializer.NodeDeserializers.Insert(objIdx, new VecNodeDeserializer());
 
 		// load dependencies
-		if (package.deps != null) {
-			Log.Info("Parsing {0}.", package.deps);
-			var input = new StreamReader(package.deps);
+		if (packageData.deps != null) {
+			Log.Info("Parsing {0}.", packageData.deps);
+			var input = new StreamReader(packageData.deps);
 			var deps = deserializer.Deserialize<string[]>(input);
 			foreach (string depName in deps) {
-				Res.Package dep;
+				PackageData dep;
 				string simpleName = StringUtil.Simplify(depName);
-				if (resourceManager.PackageDictionary.TryGetValue(simpleName, out dep)) {
-					loadPackage(resourceManager, packages, dep.Index);
+				if (packages.TryGetValue(simpleName, out dep)) {
+					loadPackage(packages, dep.package);
 				} else {
 					Log.Info("'{0}' is not an existing package.", depName);
 				}
@@ -178,9 +176,9 @@ public class World {
 		}
 		
 		// load world
-		if (package.world != null) {
-			global::Log.Info("Parsing {0}.", package.world);
-			var input = new StreamReader(package.world);
+		if (packageData.world != null) {
+			global::Log.Info("Parsing {0}.", packageData.world);
+			var input = new StreamReader(packageData.world);
 			var world = deserializer.Deserialize<Dictionary<string, ContainerData>>(input);
 			foreach (var pair in world) {
 				string name = StringUtil.Simplify(pair.Key);
@@ -198,53 +196,50 @@ public class World {
 					containerD[name] = container;
 				}
 				
+				// load properties
 				if (pair.Value.Properties != null) {
-					foreach (PropertyData prop in pair.Value.Properties) {
-						string propName = StringUtil.Simplify(prop.Name);
-						container.PropertySystem.Add(propName, loadVal(prop));
-					}
+					loadProperties(pair.Value.Properties, container);
 				}
 				
+				// load bases
 				if (pair.Value.Bases != null) {
-					foreach (var baseDataDict in pair.Value.Bases) {
-						var baseData = baseDataDict.First((_) => true);
-						string baseName = StringUtil.Simplify(baseData.Key);
-						Entity.Base entityBase = new Entity.Base(container.PropertySystem);
-						foreach (var valPair in baseData.Value) {
-							string propName = StringUtil.Simplify(valPair.Key);
-							Property prop = container.PropertySystem.WithName(propName);
-							if (prop == null) {
-								Log.Warn("In base {0} in container {1}: " +
-								         "'{2}' is not an existing property.",
-										  baseName, container.Name, propName);
-								continue;
-							}
-							Val? val = getVal(prop.Value.Type, valPair.Value);
-							if (val == null) {
-								Log.Warn("In base {0} in container {1}: " +
-								         "'{2}' is given value of wrong type.",
-										  baseName, container.Name, propName);
-								continue;
-							}
-							entityBase[prop.Index] = (Val)val;
-						}
-						container.AddBase(baseName, entityBase);
-					}
+					loadBases(pair.Value.Bases, container);
 				}
 			}
 		}
-
-
 		
-		// load events
-		/*if (package.events != null) {
-			log.Write("Loading {0}.", package.events);
-			LuaTable eventTable = loadFileIntoTable(package.events, "events");
-			if (eventTable == null) return;
-			foreach (KeyValuePair<string, LuaFunction> pair in eventTable) {
-				Lua.AddEvent(pair.Key, pair.Value);
+		scripts.Compile(package);
+	}
+	private void loadProperties(PropertyData[] data, EntityContainer container) {
+		foreach (PropertyData prop in data) {
+			string propName = StringUtil.Simplify(prop.Name);
+			container.PropertySystem.Add(propName, loadVal(prop));
+		}
+	}
+	private void loadBases(Dictionary<string, Dictionary<string, string>>[] data,
+	                       EntityContainer container) {
+		foreach (var baseDataDict in data) {
+			var baseData = baseDataDict.First((_) => true);
+			string baseName = StringUtil.Simplify(baseData.Key);
+			Entity.Base entityBase = new Entity.Base(container.PropertySystem);
+			foreach (var valPair in baseData.Value) {
+				string propName = StringUtil.Simplify(valPair.Key);
+				Property prop = container.PropertySystem.WithName(propName);
+				if (prop == null) {
+					Log.Warn("In base {0} in container {1}: '{2}' is not an existing property.",
+							  baseName, container.Name, propName);
+					continue;
+				}
+				Val? val = getVal(prop.Value.Type, valPair.Value);
+				if (val == null) {
+					Log.Warn("In base {0} in container {1}: '{2}' is given value of wrong type.",
+							  baseName, container.Name, propName);
+					continue;
+				}
+				entityBase[prop.Index] = (Val)val;
 			}
-		}*/
+			container.AddBase(baseName, entityBase);
+		}
 	}
 	private Val loadVal(PropertyData prop) {
 		Val val = new Val(0);
@@ -278,8 +273,10 @@ public class World {
 		}
 	}
 	
-	List<EntityContainer>     containers = new List<EntityContainer>();
-	Dictionary<string, EntityContainer> containerD = new Dictionary<string, EntityContainer>();
+	private List<EntityContainer> containers = new List<EntityContainer>();
+	private Dictionary<string, EntityContainer> containerD = new Dictionary<string, EntityContainer>();
+	
+	private ScriptManager scripts = new ScriptManager();
 	
 	//ushort currentEntityIndex = 0;
 	//Dictionary<ushort, Tuple<EntityContainer, ushort>> entityIndexD =

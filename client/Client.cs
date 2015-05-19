@@ -58,7 +58,7 @@ class Client {
         var missingResources = new Dictionary<ushort, Net.SMessage.CheckResources.Res>();
 		foreach (var req in resourcesMessage.Resources) {
 			Res.Package package;
-			if (resManager.PackageDictionary.TryGetValue(req.package, out package)) {
+			if (resManager.Packages.TryGetValue(req.package, out package)) {
 				if (resManager.CheckResource(req.name, package, req.hash, req.sessionID)) {
 					continue;
 				}
@@ -75,7 +75,7 @@ class Client {
 			var res = missingResources[resourceData.SessionID];
 			missingResources.Remove(resourceData.SessionID);
 			Res.Package package;
-			if (!resManager.PackageDictionary.TryGetValue(res.package, out package)) {
+			if (!resManager.Packages.TryGetValue(res.package, out package)) {
 				package = resManager.CreatePackage(res.package);
 			}
 			resManager.CreateResource(res.name, package, resourceData.ResType,
@@ -86,6 +86,7 @@ class Client {
 		Log.Info("Client now has all necessary resources. Loading world.");
 		World world = new World();
 		world.Load(resManager);
+		world.Init();
 		
 		Log.Info("Declaring ready.");
         Net.SendMessage(tcp, new Net.CMessage.Ready());

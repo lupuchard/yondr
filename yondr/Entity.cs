@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+// TODO: unit tests
 public class Entity {
 	
 	public class Base {

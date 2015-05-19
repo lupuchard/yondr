@@ -5,10 +5,10 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{F9555BF1-A267-4640-92B9-743DB969E92F}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>server</RootNamespace>
-    <AssemblyName>server</AssemblyName>
+    <ProjectGuid>{806BF5EB-9DCD-4D11-BB21-68ACCCAB3F82}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>test</RootNamespace>
+    <AssemblyName>test</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -21,12 +21,6 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <PlatformTarget>x86</PlatformTarget>
-    <CustomCommands>
-      <CustomCommands>
-        <Command type="AfterBuild" command="cp -r gamedata ${TargetDir}" workingdir="${SolutionDir}" />
-        <Command type="BeforeExecute" command="cp -r gamedata ${TargetDir}" workingdir="${SolutionDir}" />
-      </CustomCommands>
-    </CustomCommands>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
@@ -39,22 +33,20 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Compile Include="Server.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Net" />
-    <Reference Include="clipr">
-      <HintPath>..\packages\clipr.1.4.6.0\lib\net35\clipr.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\yondr\yondr.csproj">
       <Project>{F09AF069-6A17-4877-99BB-4CA915B49F64}</Project>
       <Name>yondr</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="PropertySystemTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="nunit.core, Version=2.6.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
+      <Package>nunit</Package>
+    </Reference>
+    <Reference Include="nunit.framework, Version=2.6.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">
+      <Package>nunit</Package>
+    </Reference>
   </ItemGroup>
 </Project>

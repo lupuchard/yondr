@@ -30,30 +30,30 @@ class Server {
 		Log.Init("log/server.txt", Log.DEBUG);
 		
 		var server = new Server();
+
 		var world  = new World();
 		world.Load(server.resManager);
-		//world.Init();
+		world.Init();
 		
 		Thread  logicThread = new Thread(() => server.logicLoop(world));
 		Thread listenThread = new Thread(() => server.listen(port));
 		logicThread.Start();
 		listenThread.Start();
-		
-		while (!server.done) {
-			Thread.Sleep((int)(1000 / MANAGE_FPS));
-		}
-		Log.Info("Server done. Joining threads.");
-		logicThread.Join((int)(1000 / MANAGE_FPS));
-		listenThread.Join((int)(1000 / MANAGE_FPS));
-		logicThread.Abort();
-		listenThread.Abort();
+
+		Console.CancelKeyPress += delegate {
+			server.done = true;
+			Log.Info("Terminating server...");
+			logicThread.Join((int)(1000 / MANAGE_FPS));
+			logicThread.Abort();
+			listenThread.Abort();
+		};
 	}
 	
 	private Server() {
 		done = false;
 		resManager = new Res.Manager("gamedata");
 		Log.Info("Loading packages...");
-		foreach (var package in resManager.Packages) {
+		foreach (var package in resManager.Packages.Values) {
 			try {
 				resManager.LoadPackage(package);
 			} catch(System.IO.IOException e) {
@@ -70,14 +70,15 @@ class Server {
 			var now = System.DateTime.Now;
 			double diff = (now - prev).TotalSeconds;
 			if (diff > 1.0 / Net.LogicalFPS) {
-				//world.Update(diff);
+				world.Update(diff);
 			} else {
                 Thread.Sleep((prev + new TimeSpan(0, 0, 0, 0, 1000 / Net.LogicalFPS)) - now);
 				diff = (System.DateTime.Now - prev).TotalSeconds;
-				//world.Update(diff);
+				world.Update(diff);
 			}
 			prev = now;
 		}
+		Log.Info("Logic loop exited.");
 	}
 	
 	private void listen(ushort port) {
@@ -87,16 +88,19 @@ class Server {
 			var ip = System.Net.Dns.GetHostEntry("localhost").AddressList[0];
 			var listener = new TcpListener(ip, port);
 			listener.Start();
-			while (!done) {
+			while (true) {
 				var tcp = listener.AcceptTcpClient();
 				Thread clientThread = new Thread(() => handleNewClient(tcp));
 				clientThreads.Add(clientThread);
 				clientThread.Start();
 			}
 		} catch (ThreadAbortException) {
+		} catch (System.IO.EndOfStreamException) {
+			Log.Warn("A client disconnected unexpectedly.");
 		} catch (SocketException e) {
-			Log.Warn("{0}", e);
+			Log.Warn("{0}", e.Message);
 		} finally {
+			Log.Info("Aborting client threads.");
 			foreach (Thread thread in clientThreads) {
 				thread.Abort();
 			}
@@ -114,12 +118,11 @@ class Server {
 		resManagerLock.AcquireReaderLock(LOCK_TIMEOUT);
 		foreach (Res.Res res in resManager.Resources) {
             var req = new Net.SMessage.CheckResources.Res();
-			req.package   = resManager.Packages[res.Name.Package].Name;
-			req.name      = res.Name.ID;
+			req.package   = res.Package.Name;
+			req.name      = res.Name;
 			req.hash      = res.Hash;
 			req.sessionID = res.SessionID;
 			checkResourcesMessage.Resources.Add(req);
-			Log.Info("{0} requested.", res.Name.ID);
 		}
 		resManagerLock.ReleaseReaderLock();
         Net.SendMessage(tcp, checkResourcesMessage);
@@ -130,7 +133,7 @@ class Server {
 		// send missing resources
 		foreach (ushort sessionID in request.Resources) {
 			resManagerLock.AcquireReaderLock(LOCK_TIMEOUT);
-			Res.Res res = resManager.SessionIDResourceDictionary[sessionID];
+			Res.Res res = resManager.ResourceDictionary[sessionID];
             Net.SendMessage(tcp, new Net.SMessage.Resource(sessionID, res.Type, res.Data));
 		}
 		
