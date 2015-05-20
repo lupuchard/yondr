@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PropertySystemTest.cs" />
+    <Compile Include="MeshTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="nunit.core, Version=2.6.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77">

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
-using System.Xml.Serialization;
 using System.IO;
+using System.Xml.Serialization;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Res {
 
@@ -8,24 +10,57 @@ public enum Type {
 	UNKNOWN,
 	YAML,
 	SCRIPT,
+	BMP,
+	PNG,
+	COLLADA,
+	MESH,
 };
 	
-static class TypeMethods {
+public static class TypeMethods {
 	public static string GetExtension(this Type type) {
 		switch (type) {
 			case Type.UNKNOWN: return "what";
 			case Type.YAML:    return "yaml";
 			case Type.SCRIPT:  return "cs";
-			default: return "fixme";
+			case Type.PNG:     return "png";
+			case Type.MESH:    return "ym";
+			default: {
+				Log.Warn("{0} is not a type you should be storing.", type);
+				return "fixme";
+			}
 		}
 	}
 	public static Type FromExtension(string extension) {
 		switch (extension) {
-			case ".yaml": return Type.YAML;
-			case ".yml":  return Type.YAML;
-			case ".cs":   return Type.SCRIPT;
-			default:     return Type.UNKNOWN;
+			case ".yaml":  return Type.YAML;
+			case ".yml":   return Type.YAML;
+			case ".cs":    return Type.SCRIPT;
+			case ".bmp":   return Type.BMP;
+			case ".png":   return Type.PNG;
+			case ".dae":   return Type.COLLADA;
+			case ".ym":    return Type.MESH;
+			default:       return Type.UNKNOWN;
 		}
+	}
+	public static Type? TransformsTo(this Type type) {
+		switch (type) {
+			case Type.BMP:     return Type.PNG;
+			case Type.COLLADA: return Type.MESH;
+			default: return null;
+		}
+	}
+	
+	public static Type Transform(this Type type, string path, StreamWriter output) {
+		switch (type) {
+			case Type.BMP: throw new System.NotImplementedException();
+			case Type.COLLADA: {
+				Mesh mesh = Mesh.FromCollada(path);
+				IFormatter formatter = new BinaryFormatter();
+				formatter.Serialize(output.BaseStream, mesh);
+			} break;
+			default: throw new System.ArgumentException("Does not transform.");
+		}
+		return (Type)type.TransformsTo();
 	}
 }
 	

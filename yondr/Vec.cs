@@ -142,33 +142,58 @@ public struct Vec3<T> where T: IConvertible {
 	}
 }
 
+public struct Vec4<T> where T: IConvertible {
+	public T W { get; }
+	public T X { get; }
+	public T Y { get; }
+	public T Z { get; }
+	
+	public Vec4() {
+		W = Operator<T>.Zero;
+		X = Operator<T>.Zero;
+		Y = Operator<T>.Zero;
+		Z = Operator<T>.Zero;
+	}
+	public Vec4(T w, T x, T y, T z) {
+		W = w;
+		X = x;
+		Y = y;
+		Z = z;
+	}
+}
+
 public class VecNodeDeserializer: INodeDeserializer {
 	public bool Deserialize(EventReader reader, Type expectedType,
 	                        Func<EventReader, Type, object> nested,
 	                        out object value) {
 		if (expectedType.IsGenericType) {
-			if (expectedType.GetGenericTypeDefinition() == typeof(Vec3<>)) {
-				reader.Expect<SequenceStart>();
-				value = Activator.CreateInstance(expectedType, new object[] {
-					nested(reader, expectedType.GetGenericArguments()[0]),
-					nested(reader, expectedType.GetGenericArguments()[0]),
-					nested(reader, expectedType.GetGenericArguments()[0]),
-				});
-				reader.Accept<SequenceEnd>();
-				reader.Expect<SequenceEnd>();
+			if (expectedType.GetGenericTypeDefinition() == typeof(Vec2<>)) {
+				value = callVec(2, reader, expectedType, nested);
 				return true;
-			} else if (expectedType.GetGenericTypeDefinition() == typeof(Vec2<>)) {
-				reader.Expect<SequenceStart>();
-				value = Activator.CreateInstance(expectedType, new object[] {
-					nested(reader, expectedType.GetGenericArguments()[0]),
-					nested(reader, expectedType.GetGenericArguments()[0]),
-				});
-				reader.Accept<SequenceEnd>();
-				reader.Expect<SequenceEnd>();
+			} else if (expectedType.GetGenericTypeDefinition() == typeof(Vec3<>)) {
+				value = callVec(3, reader, expectedType, nested);
+				return true;
+			} else if (expectedType.GetGenericTypeDefinition() == typeof(Vec4<>)) {
+				value = callVec(4, reader, expectedType, nested);
 				return true;
 			}
 		}
 		value = null;
 		return false;
+	}
+	private object callVec(int numArgs, EventReader reader, Type expectedType,
+	                       Func<EventReader, Type, object> nested) {
+		Type t = expectedType.GetGenericArguments()[0];
+		
+		reader.Expect<SequenceStart>();
+		var args = new object[numArgs];
+		for (int i = 0; i < args.Length; i++) {
+			args[i] = nested(reader, t);
+		}
+		object value = Activator.CreateInstance(expectedType, args);
+		reader.Accept<SequenceEnd>();
+		reader.Expect<SequenceEnd>();
+		
+		return value;
 	}
 }

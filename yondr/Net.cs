@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Runtime.Serialization;
@@ -10,11 +11,11 @@ public static class Net {
 	public const ushort DefaultPort = 41414;
 	
 	/// Messeges that the Server can send to the Client.
-	[System.Serializable]
+	[Serializable]
 	public abstract class SMessage {
 		
 		/// First message. Tells the Client if they are rejected or not and a reason why.
-		[System.Serializable]
+		[Serializable]
 		public class Welcome: SMessage {
 			public Welcome(bool isActually, string message) {
 				Is      = isActually;
@@ -25,12 +26,12 @@ public static class Net {
 		}
 		
 		/// A list of all the required resources.
-		[System.Serializable]
+		[Serializable]
 		public class CheckResources: SMessage {
 			public CheckResources() {
 				Resources = new List<Res>();
 			}
-			[System.Serializable]
+			[Serializable]
 			public struct Res {
 				public string package;
 				public string name;
@@ -41,7 +42,7 @@ public static class Net {
 		}
 		
 		/// The data for a particular resource.
-		[System.Serializable]
+		[Serializable]
 		public class Resource: SMessage {
 			public Resource(ushort sessionID, Res.Type type, byte[] data) {
 				SessionID = sessionID;
@@ -53,7 +54,7 @@ public static class Net {
 			public byte[] Data      { get; set; }
 		}
 		
-		[System.Serializable]
+		[Serializable]
 		public class Goodbye: SMessage { 
 			public Goodbye(string message) {
 				Message = message;
@@ -64,12 +65,12 @@ public static class Net {
 	
 	
 	/// Messeges that the Client can send to the Server.
-	[System.Serializable]
+	[Serializable]
 	public abstract class CMessage {
 		
 		/// A list of all the resources among those mentioned in CheckResources that
 		/// the Client does not have and needs the Server to send them.
-		[System.Serializable]
+		[Serializable]
 		public class RequestResources: CMessage {
 			public RequestResources() {
 				Resources = new List<ushort>();
@@ -77,12 +78,12 @@ public static class Net {
 			public List<ushort> Resources { get; set; }
 		}
 		
-		[System.Serializable]
+		[Serializable]
 		public class Ready: CMessage {
 			public Ready() { }
 		}
 		
-		[System.Serializable]
+		[Serializable]
 		public class Goodbye: CMessage { 
 			public Goodbye(string message) {
 				Message = message;

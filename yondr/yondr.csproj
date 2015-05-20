@@ -49,6 +49,34 @@
     <Compile Include="ScriptManager.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="ScriptContext.cs" />
+    <Compile Include="Res\Mesh.cs" />
+    <Compile Include="Res\Collada\Collada.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\Accessor.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\BoolArray.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\FloatArray.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\InputSemantic.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\InputShared.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\InputUnshared.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\IntArray.cs" />
+    <Compile Include="Res\Collada\Core\DataFlow\Source.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Geometry.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\GeometryCommonFields.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\LibraryGeometries.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Mesh.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Polylist.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Triangles.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Trifans.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Tristrips.cs" />
+    <Compile Include="Res\Collada\Core\Geometry\Vertices.cs" />
+    <Compile Include="Res\Collada\Core\Technique\Technique.cs" />
+    <Compile Include="Res\Collada\Core\Technique\TechniqueCommon.cs" />
+    <Compile Include="Res\Collada\Core\Technique\TechniqueCommonSource.cs" />
+    <Compile Include="Res\Collada\Properties\AssemblyInfo.cs" />
+    <Compile Include="Res\Collada\Types\ArrayString.cs" />
+    <Compile Include="Res\Collada\Types\BoolArrayString.cs" />
+    <Compile Include="Res\Collada\Types\FloatArrayString.cs" />
+    <Compile Include="Res\Collada\Types\IntArrayString.cs" />
+    <Compile Include="Res\Collada\Types\ParseUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />
@@ -59,6 +87,9 @@
     </Reference>
     <Reference Include="YamlDotNet">
       <HintPath>..\packages\YamlDotNet.3.5.1\lib\net35\YamlDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="Cloo">
+      <HintPath>..\packages\Sourceforge.Cloo.0.9.1\lib\net35\Cloo.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -73,5 +104,8 @@
       <Project>{A73EDE74-5D87-4702-BC75-4B11BA685E86}</Project>
       <Name>script-context</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Res\Collada\" />
   </ItemGroup>
 </Project>

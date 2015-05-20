@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-helper", "script-hel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-context", "script-context\script-context.csproj", "{A73EDE74-5D87-4702-BC75-4B11BA685E86}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{553A6E22-0055-4255-A17A-1D111970A612}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gamedata", "gamedata", "{553A6E22-0055-4255-A17A-1D111970A612}"
 	ProjectSection(SolutionItems) = preProject
 		gamedata\testpackage\events.cs = gamedata\testpackage\events.cs
 	EndProjectSection

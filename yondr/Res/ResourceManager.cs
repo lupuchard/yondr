@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Collections.Generic;
 
@@ -7,7 +8,7 @@ namespace Res {
 
 public class Manager {
 	public Manager(string directory) {
-		Directory = directory;
+		Dir        = directory;
 		packages   = new Dictionary<string, Package>();
 		resources  = new List<Res>();
 		resourceD  = new Dictionary<ushort, Res>();
@@ -33,7 +34,7 @@ public class Manager {
 	/// @throws IOException.
 	public Package CreatePackage(string name) {
 		name = StringUtil.Simplify(name);
-		string path = Path.Combine(Directory, name);
+		string path = Path.Combine(Dir, name);
 		var dir = new DirectoryInfo(path);
 		if (!dir.Exists) dir.Create();
 
@@ -64,6 +65,23 @@ public class Manager {
 			}
 			
 			var type = TypeMethods.FromExtension(Path.GetExtension(path));
+			
+			if (type.TransformsTo() != null) {
+				Type transType = (Type)type.TransformsTo();
+				string transFilename = "_" + name + "." + transType.GetExtension();
+				string transPath = Path.Combine(package.Path, transFilename);
+				if (File.Exists(transPath)) {
+					DateTime transDate = File.GetLastWriteTime(transPath);
+					DateTime  prevDate = Directory.GetLastWriteTime(path);
+					if (prevDate < transDate) {
+						type = transType;
+					}
+				} else using (var transFile = new StreamWriter(transPath)) {
+					type = type.Transform(path, transFile);
+				}
+				path = transPath;
+			}
+			
 			var res  = new Res(name, path, type, package);
 			res.SessionID = nextSessionID;
 			res.Data = File.ReadAllBytes(path);
@@ -156,7 +174,7 @@ public class Manager {
 		resourceD.Add(res.SessionID, res);
 	}
 
-	public string Directory { get; set; }
+	public string Dir { get; set; }
 
 	private readonly Dictionary<string, Package> packages;
 	public IReadOnlyDictionary<string, Package> Packages { get { return packages; } }

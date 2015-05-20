@@ -87,6 +87,7 @@ public class ScriptManager {
 			foreach (var output in result.Output) {
 				Log.Info(" {0}", output);
 			}
+			ass = result.CompiledAssembly;
 		}
 		
 		var flags = BindingFlags.Public | BindingFlags.Static;

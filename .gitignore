@@ -9,10 +9,11 @@
 test-results/
 
 # NuGet Packages
-packages/JonSkeet.MiscUtil.0.1/*
-packages/YamlDotNet.3.5.1/*
-packages/clipr.1.4.6.0/*
-
+packages/JonSkeet.MiscUtil.*/*
+packages/YamlDotNet.*/*
+packages/clipr.*/*
+packages/OpenTK.*/*
+packages/Sourceforge.Cloo.*/*
 
 # Build
 */bin/*
