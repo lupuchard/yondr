@@ -37,15 +37,11 @@
   <ItemGroup>
     <Compile Include="PropertySystem.cs" />
     <Compile Include="Val.cs" />
-    <Compile Include="Vec.cs" />
     <Compile Include="Entity.cs" />
-    <Compile Include="StringUtil.cs" />
     <Compile Include="Res\Resource.cs" />
     <Compile Include="Res\ResourceManager.cs" />
-    <Compile Include="World\Container.cs" />
     <Compile Include="World\World.cs" />
     <Compile Include="Net.cs" />
-    <Compile Include="SerializableDictionary.cs" />
     <Compile Include="ScriptManager.cs" />
     <Compile Include="Log.cs" />
     <Compile Include="ScriptContext.cs" />
@@ -77,6 +73,14 @@
     <Compile Include="Res\Collada\Types\FloatArrayString.cs" />
     <Compile Include="Res\Collada\Types\IntArrayString.cs" />
     <Compile Include="Res\Collada\Types\ParseUtils.cs" />
+    <Compile Include="SerializableDictionary.cs" />
+    <Compile Include="Yaml.cs" />
+    <Compile Include="World\GraphicalComponent.cs" />
+    <Compile Include="World\GridComponent.cs" />
+    <Compile Include="World\IComponent.cs" />
+    <Compile Include="World\SpacialComponent.cs" />
+    <Compile Include="RendererI.cs" />
+    <Compile Include="World\EntityGroup.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />
@@ -86,10 +90,10 @@
       <HintPath>..\packages\JonSkeet.MiscUtil.0.1\lib\net35-Client\MiscUtil.dll</HintPath>
     </Reference>
     <Reference Include="YamlDotNet">
-      <HintPath>..\packages\YamlDotNet.3.5.1\lib\net35\YamlDotNet.dll</HintPath>
+      <HintPath>..\packages\YamlDotNet.3.6.0\lib\net35\YamlDotNet.dll</HintPath>
     </Reference>
-    <Reference Include="Cloo">
-      <HintPath>..\packages\Sourceforge.Cloo.0.9.1\lib\net35\Cloo.dll</HintPath>
+    <Reference Include="OpenTK">
+      <HintPath>..\packages\OpenTK.1.1.1589.5942\lib\NET40\OpenTK.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -103,6 +107,10 @@
     <ProjectReference Include="..\script-context\script-context.csproj">
       <Project>{A73EDE74-5D87-4702-BC75-4B11BA685E86}</Project>
       <Name>script-context</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\util\util.csproj">
+      <Project>{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}</Project>
+      <Name>util</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

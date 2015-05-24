@@ -13,10 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-helper", "script-hel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-context", "script-context\script-context.csproj", "{A73EDE74-5D87-4702-BC75-4B11BA685E86}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gamedata", "gamedata", "{553A6E22-0055-4255-A17A-1D111970A612}"
-	ProjectSection(SolutionItems) = preProject
-		gamedata\testpackage\events.cs = gamedata\testpackage\events.cs
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "util", "util\util.csproj", "{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +29,10 @@ Global
 		{95FC67BD-EC57-4123-94B3-72E66723D0AD}.Debug|x86.Build.0 = Debug|Any CPU
 		{95FC67BD-EC57-4123-94B3-72E66723D0AD}.Release|x86.ActiveCfg = Release|Any CPU
 		{95FC67BD-EC57-4123-94B3-72E66723D0AD}.Release|x86.Build.0 = Release|Any CPU
+		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Debug|x86.Build.0 = Debug|Any CPU
+		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Release|x86.ActiveCfg = Release|Any CPU
+		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Release|x86.Build.0 = Release|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Debug|x86.Build.0 = Debug|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Release|x86.ActiveCfg = Release|Any CPU
@@ -49,8 +50,6 @@ Global
 		{F9555BF1-A267-4640-92B9-743DB969E92F}.Release|x86.ActiveCfg = Release|x86
 		{F9555BF1-A267-4640-92B9-743DB969E92F}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0
 		$0.DotNetNamingPolicy = $1
@@ -65,6 +64,7 @@ Global
 		$2.scope = text/x-csharp
 		$0.CSharpFormattingPolicy = $3
 		$3.IndentNamespaceBody = False
+		$3.IndentSwitchBody = True
 		$3.NamespaceBraceStyle = EndOfLine
 		$3.ClassBraceStyle = EndOfLine
 		$3.InterfaceBraceStyle = EndOfLine

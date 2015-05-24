@@ -18,4 +18,3 @@ namespace Collada {
 		public uint Stride;
 	}
 }
-

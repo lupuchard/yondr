@@ -4,7 +4,7 @@
 public class PropertySystemTest {
 	[Test]
 	public void UseageTest() {
-		var props = new PropertySystem();
+		var props = new PropertySystem(0);
 		props.Add("fred", new Val(4.5));
 		props.Add("paul", new Val("paulerson"));
 		props.Add("carl", new Val(true));

@@ -1,11 +1,84 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Collections.Generic;
+using OpenTK;
 
-public class ScriptContext: IContext {
-	public ScriptContext() { }
+// An IContext is passed into all the scripting functions.
+// It is defined in the script-context helper library.
+public class ScriptContext: Yondr.IContext {
+	public ScriptContext(World w, RendererI r) {
+		world = w;
+		renderer = r;
 
-	public TextWriter Out {
-		get {
-			return System.Console.Out;
+		foreach (var group in w.Groups) {
+			spacialComponents.Add(group.GetComponent<SpacialComponent>());
 		}
 	}
+
+	public TextWriter Out { get { return Console.Out; } }
+
+	public EntityIdx? CreateEntityI(string group, string bass) {
+		EntityGroup cont = world.GroupDictionary[group];
+		if (cont == null) {
+			Log.Error("'{0}' is not an existing group.", group);
+			return null;
+		}
+
+		Entity.Base entityBase = cont.GetBase(bass);
+		if (entityBase == null) {
+			Log.Error("'{0}' is not an existing base in group {1}", bass, group);
+			return null;
+		}
+
+		return new EntityIdx(cont.Index, cont.CreateEntity(entityBase).Index);
+	}
+
+	public void EntitySetPosition(EntityIdx entity, Vec3<float> position) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can's set position of non-spacial entity!");
+		} else {
+			space.X[entity.Idx] = position.X;
+			space.Y[entity.Idx] = position.Y;
+			space.Z[entity.Idx] = position.Z;
+		}
+	}
+
+	public Vec3<float> EntityGetPosition(EntityIdx entity) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can's set position of non-spacial entity!");
+			return new Vec3<float>();
+		} else {
+			return new Vec3<float>(space.X[entity.Idx], space.Y[entity.Idx], space.Z[entity.Idx]);
+		}
+	}
+
+	public void EntityLookAt(EntityIdx entity, Vec3<float> at) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can's set orientation of non-spacial entity!");
+			return;
+		}
+		int idx = entity.Idx;
+
+		var eye = new Vector3(space.X[idx], space.Y[idx], space.Z[idx]);
+		var atv = new Vector3(at.X, at.Y, at.Z);
+		var up  = new Vector3(0, 1, 0);
+		var mat = Matrix4.LookAt(eye, atv, up);
+
+		space.A[idx] = (float)Math.Sqrt(1 + mat.M11 + mat.M22 + mat.M33) / 2;
+		space.B[idx] = (mat.M32 - mat.M23) / (4 * space.A[idx]);
+		space.C[idx] = (mat.M13 - mat.M31) / (4 * space.A[idx]);
+		space.D[idx] = (mat.M21 - mat.M12) / (4 * space.A[idx]);
+	}
+
+	public void SetCamera(EntityIdx entity) {
+		if (renderer == null) return;
+		renderer.Camera = world.Groups[entity.Group].Entities[entity.Idx];
+	}
+	
+	private List<SpacialComponent> spacialComponents = new List<SpacialComponent>();
+	private readonly World world;
+	private readonly RendererI renderer;
 }

@@ -35,17 +35,21 @@
   <ItemGroup>
     <Compile Include="Client.cs" />
     <Compile Include="Display.cs" />
-    <Compile Include="Renderer.cs" />
+    <Compile Include="Graphics\GMesh.cs" />
+    <Compile Include="Graphics\Renderer.cs" />
+    <Compile Include="Graphics\Shader.cs" />
+    <Compile Include="Graphics\Texture.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Net" />
     <Reference Include="System" />
-    <Reference Include="clipr">
-      <HintPath>..\packages\clipr.1.4.6.0\lib\net35\clipr.dll</HintPath>
-    </Reference>
     <Reference Include="OpenTK">
       <HintPath>..\packages\OpenTK.1.1.1589.5942\lib\NET40\OpenTK.dll</HintPath>
     </Reference>
+    <Reference Include="clipr">
+      <HintPath>..\packages\clipr.1.4.7.0\lib\net35\clipr.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -55,5 +59,12 @@
       <Project>{F09AF069-6A17-4877-99BB-4CA915B49F64}</Project>
       <Name>yondr</Name>
     </ProjectReference>
+    <ProjectReference Include="..\util\util.csproj">
+      <Project>{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}</Project>
+      <Name>util</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Graphics\" />
   </ItemGroup>
 </Project>

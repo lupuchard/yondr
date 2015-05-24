@@ -33,7 +33,6 @@ namespace Collada {
 				
 			} catch (Exception ex) {
 				Console.WriteLine(ex.ToString());
-				Console.ReadLine();
 				return null;
 			}
 		}

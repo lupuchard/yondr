@@ -25,17 +25,40 @@ class Client {
 			System.Console.WriteLine();
 			try { CliParser.Parse<Options>(new string[] {"-h"}); }
 			catch (clipr.Core.ParserExit) { }
-		}   catch (clipr.Core.ParserExit) { }
+		} catch (clipr.Core.ParserExit) { }
 	}
 
 	public static void Connect(string host, ushort port) {
 		Log.Init("log/client.txt", Log.DEBUG);
-		
+
 		Client client = new Client();
+
 		client.connect(host, port);
+
+		Log.Info("Successfully connected.");
+
+		var world = new World();
+		var packages = world.Load(client.resManager);
+
+		Log.Info("Starting window...");
+
+		var display = new Display(
+			client.resManager, world, 600, 600,
+			(renderer) => {
+				Log.Info("Loading scripts...");
+
+				var scripts = new ScriptManager(world, renderer);
+				foreach (var package in packages) {
+					scripts.Compile(package);
+				}
+				scripts.Init();
+			},
+			(d) => {}
+		);
 	}
 	
 	private Client() {
+		
 		resManager = new Res.Manager("cache");
 	}
 	
@@ -44,7 +67,7 @@ class Client {
 		var tcp = new TcpClient(host, port);
 		Log.Info("Connected successfully.");
 		
-        var welcomeMessage = Net.ReceiveMessage<Net.SMessage.Welcome>(tcp);
+		var welcomeMessage = Net.ReceiveMessage<Net.SMessage.Welcome>(tcp);
 		if (welcomeMessage.Is) {
 			Log.Info("Client has been welcomed with message '{0}'.", welcomeMessage.Message);
 		} else {
@@ -53,9 +76,9 @@ class Client {
 		}
 		
 		Log.Info("Receiving resource request...");
-        var resourcesMessage = Net.ReceiveMessage<Net.SMessage.CheckResources>(tcp);
-        var resourceRequest  = new Net.CMessage.RequestResources();
-        var missingResources = new Dictionary<ushort, Net.SMessage.CheckResources.Res>();
+		var resourcesMessage = Net.ReceiveMessage<Net.SMessage.CheckResources>(tcp);
+		var resourceRequest  = new Net.CMessage.RequestResources();
+		var missingResources = new Dictionary<ushort, Net.SMessage.CheckResources.Res>();
 		foreach (var req in resourcesMessage.Resources) {
 			Res.Package package;
 			if (resManager.Packages.TryGetValue(req.package, out package)) {
@@ -69,9 +92,9 @@ class Client {
 		}
 		
 		Log.Info("Client lacks {0} resources. Requesting...", resourceRequest.Resources.Count);
-        Net.SendMessage(tcp, resourceRequest);
+		Net.SendMessage(tcp, resourceRequest);
 		while (missingResources.Count > 0) {
-            var resourceData = Net.ReceiveMessage<Net.SMessage.Resource>(tcp);
+			var resourceData = Net.ReceiveMessage<Net.SMessage.Resource>(tcp);
 			var res = missingResources[resourceData.SessionID];
 			missingResources.Remove(resourceData.SessionID);
 			Res.Package package;
@@ -83,14 +106,8 @@ class Client {
 			Log.Info("Received {0}:{1}.", res.package, res.name);
 		}
 		
-		Log.Info("Client now has all necessary resources. Loading world.");
-		World world = new World();
-		world.Load(resManager);
-		world.Init();
-		
 		Log.Info("Declaring ready.");
-        Net.SendMessage(tcp, new Net.CMessage.Ready());
-        Net.SendMessage(tcp, new Net.CMessage.Goodbye("thx"));
+		Net.SendMessage(tcp, new Net.CMessage.Ready());
 	}
 	
 	private readonly Res.Manager resManager;

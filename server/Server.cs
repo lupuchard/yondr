@@ -16,11 +16,11 @@ class Server {
 			var options = CliParser.Parse<Options>(args);
 			Listen(options.Port);
 		} catch (ParseException e) {
-			System.Console.WriteLine(e.Message);
-			System.Console.WriteLine();
+			Console.WriteLine(e.Message);
+			Console.WriteLine();
 			try { CliParser.Parse<Options>(new string[] {"-h"}); }
 			catch (clipr.Core.ParserExit) { }
-		}   catch (clipr.Core.ParserExit) { }
+		} catch (clipr.Core.ParserExit) { }
 	}
 
 	const double MANAGE_FPS = 1;
@@ -31,12 +31,16 @@ class Server {
 		
 		var server = new Server();
 
-		var world  = new World();
-		world.Load(server.resManager);
-		world.Init();
-		
-		Thread  logicThread = new Thread(() => server.logicLoop(world));
-		Thread listenThread = new Thread(() => server.listen(port));
+		var world    = new World();
+		var packages = world.Load(server.resManager);
+		var scripts = new ScriptManager(world, null);
+		foreach (var package in packages) {
+			scripts.Compile(package);
+		}
+		scripts.Init();
+
+		var  logicThread = new Thread(() => server.logicLoop(scripts));
+		var listenThread = new Thread(() => server.listen(port));
 		logicThread.Start();
 		listenThread.Start();
 
@@ -51,7 +55,7 @@ class Server {
 	
 	private Server() {
 		done = false;
-		resManager = new Res.Manager("gamedata");
+		resManager = new Res.Manager("../../../gamedata");
 		Log.Info("Loading packages...");
 		foreach (var package in resManager.Packages.Values) {
 			try {
@@ -61,20 +65,21 @@ class Server {
 				continue;
 			}
 		}
+		Log.Info("Loaded all {0} packages.", resManager.Packages.Count);
 	}
 	
-	private void logicLoop(World world) {
+	private void logicLoop(ScriptManager scripts) {
 		var prev = DateTime.Now;
 		Log.Info("Logic loop begin...");
 		while (!done) {
-			var now = System.DateTime.Now;
+			var now = DateTime.Now;
 			double diff = (now - prev).TotalSeconds;
 			if (diff > 1.0 / Net.LogicalFPS) {
-				world.Update(diff);
+				scripts.Update(diff);
 			} else {
-                Thread.Sleep((prev + new TimeSpan(0, 0, 0, 0, 1000 / Net.LogicalFPS)) - now);
-				diff = (System.DateTime.Now - prev).TotalSeconds;
-				world.Update(diff);
+				Thread.Sleep((prev + new TimeSpan(0, 0, 0, 0, 1000 / Net.LogicalFPS)) - now);
+				diff = (DateTime.Now - prev).TotalSeconds;
+				scripts.Update(diff);
 			}
 			prev = now;
 		}
@@ -90,7 +95,7 @@ class Server {
 			listener.Start();
 			while (true) {
 				var tcp = listener.AcceptTcpClient();
-				Thread clientThread = new Thread(() => handleNewClient(tcp));
+				var clientThread = new Thread(() => handleNewClient(tcp));
 				clientThreads.Add(clientThread);
 				clientThread.Start();
 			}

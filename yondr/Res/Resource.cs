@@ -8,12 +8,14 @@ namespace Res {
 
 public enum Type {
 	UNKNOWN,
-	YAML,
-	SCRIPT,
-	BMP,
-	PNG,
-	COLLADA,
-	MESH,
+	YAML,    // YAML data file
+	SCRIPT,  // CSharp script
+	PNG,     // PNG image file
+	JPG,     // JPEG image file
+	COLLADA, // Collada mesh file. Transforms to MESH
+	MESH,    // Custom mesh format
+	VERT,    // GLSL fragment shader
+	FRAG,    // GLSL vertex shader
 };
 	
 public static class TypeMethods {
@@ -23,28 +25,33 @@ public static class TypeMethods {
 			case Type.YAML:    return "yaml";
 			case Type.SCRIPT:  return "cs";
 			case Type.PNG:     return "png";
+			case Type.JPG:     return "jpg";
+			case Type.COLLADA: return "dae";
 			case Type.MESH:    return "ym";
-			default: {
-				Log.Warn("{0} is not a type you should be storing.", type);
-				return "fixme";
-			}
+			case Type.VERT:    return "vert";
+			case Type.FRAG:    return "frag";
+			default: throw new System.ArgumentOutOfRangeException();
 		}
 	}
 	public static Type FromExtension(string extension) {
 		switch (extension) {
-			case ".yaml":  return Type.YAML;
+			case ".yaml":
 			case ".yml":   return Type.YAML;
 			case ".cs":    return Type.SCRIPT;
-			case ".bmp":   return Type.BMP;
+			case ".jpeg":
+			case ".jpg":   return Type.JPG;
 			case ".png":   return Type.PNG;
 			case ".dae":   return Type.COLLADA;
 			case ".ym":    return Type.MESH;
+			case ".glslv":
+			case ".vert":  return Type.VERT;
+			case ".glslf":
+			case ".frag":  return Type.FRAG;
 			default:       return Type.UNKNOWN;
 		}
 	}
 	public static Type? TransformsTo(this Type type) {
 		switch (type) {
-			case Type.BMP:     return Type.PNG;
 			case Type.COLLADA: return Type.MESH;
 			default: return null;
 		}
@@ -52,12 +59,11 @@ public static class TypeMethods {
 	
 	public static Type Transform(this Type type, string path, StreamWriter output) {
 		switch (type) {
-			case Type.BMP: throw new System.NotImplementedException();
-			case Type.COLLADA: {
+			case Type.COLLADA:
 				Mesh mesh = Mesh.FromCollada(path);
 				IFormatter formatter = new BinaryFormatter();
 				formatter.Serialize(output.BaseStream, mesh);
-			} break;
+				break;
 			default: throw new System.ArgumentException("Does not transform.");
 		}
 		return (Type)type.TransformsTo();

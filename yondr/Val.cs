@@ -1,4 +1,4 @@
-
+/// A "variant" representing a value stored in an entity.
 public struct Val {
 	
 	public enum Ty { String, Int, Float, Bool };

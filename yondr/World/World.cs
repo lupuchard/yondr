@@ -2,99 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NodeDeserializers;
 using YamlDotNet.Serialization.NamingConventions;
-using YamlDotNet.Core.Events;
 
 public class World {
-	
-	public World() { }
-	
-	public EntityContainer GetContainer(ushort index) {
-		return containers[index];
-	}
-	public EntityContainer GetContainer(string name) {
-		return containerD[name];
-	}
-
-	public void Init() {
-		scripts.Init();
-	}
-	public void Update(double secs) {
-		scripts.Update(secs);
-	}
-	public void Exit() {
-		scripts.Exit();
-	}
-
-	// When parsing a non-scalar, it should accept
-	// strings as other yaml resources to import.
-	private class ImportNodeDeserializer: INodeDeserializer {
-		private Deserializer deserializer;
-		private Res.Package package;
-		public ImportNodeDeserializer(Deserializer d, Res.Package p) {
-			deserializer = d;
-			package = p;
-		}
-
-		public bool Deserialize(EventReader reader, Type expectedType,
-		                        Func<EventReader, Type, object> nested,
-		                        out object value) {
-			if (expectedType.IsValueType || expectedType == typeof(string)) {
-				value = null;
-				return false;
-			}
-			var scalar = reader.Allow<Scalar>();
-			if (scalar == null) {
-				value = null;
-				return false;
-			}
-			var resName = StringUtil.Simplify(Path.GetFileNameWithoutExtension(scalar.Value));
-			var res = package.Resources[resName];
-			if (res.Type != Res.Type.YAML) {
-				throw new YamlException(scalar.Start, scalar.End,
-				                        String.Format("Resource {0} is not yaml.", resName));
-			} else if (res.Used) {
-				throw new YamlException(scalar.Start, scalar.End,
-				                        String.Format("Circular dependency? {0}", res.Path));
-			}
-			res.Used = true;
-			var input = new StreamReader(res.Path);
-			value = deserializer.Deserialize(input, expectedType);
-			res.Used = false;
-			return true;
-		}
-	}
-	
-	// Parsing enums should not be case-sensitive.
-	private class EnumNodeDeserializer: INodeDeserializer {
-		public bool Deserialize(EventReader reader, Type expectedType,
-		                        Func<EventReader, Type, object> nested,
-		                        out object value) {
-			if (expectedType.IsEnum) {
-				var scalar = reader.Allow<Scalar>();
-				if (scalar != null) {
-					value = Enum.Parse(expectedType, scalar.Value, true);
-					return true;
-				}
-			}
-			value = null;
-			return false;
-		}
-	}
 
 	private class PropertyData {
 		public string Name { get; set; }
 		public Val.Ty Type { get; set; }
 		public string Default { get; set; } = null;
 	}
-	private class ContainerData {
-		public enum Ty { List, Grid }
-		public Ty Type { get; set; } = Ty.List;
-		public Vec3<ushort> Dim { get; set; } = new Vec3<ushort>(1, 1, 1);
-		public PropertyData[] Properties { get; set; } = null;
+	private class GroupData {
+		public ComponentType[] Components { get; set; } = null;
+		public PropertyData[]  Properties { get; set; } = null;
 		public Dictionary<string, Dictionary<string, string>>[] Bases { get; set; } = null;
 	}
 	private class PackageData {
@@ -107,8 +28,12 @@ public class World {
 		public string events = null;
 		public bool loaded   = false;
 	}
-	public void Load(Res.Manager resourceManager) {
-		var packages = new Dictionary<string, PackageData>();
+
+	/// Loads all the world data from the resource manager.
+	/// @return The packages in dependency order.
+	public List<Res.Package> Load(Res.Manager resourceManager) {
+		var packages    = new Dictionary<string, PackageData>();
+		var packageList = new List<Res.Package>();
 
 		// Get all important data resources.
 		foreach (Res.Package package in resourceManager.Packages.Values) {
@@ -116,7 +41,7 @@ public class World {
 			packages.Add(package.Name, packageData);
 			foreach (Res.Res res in package.Resources.Values) {
 				switch (res.Type) {
-					case Res.Type.YAML: {
+					case Res.Type.YAML:
 						switch (res.Name) {
 							case "deps":   packageData.deps   = res.Path; break;
 							case "world":  packageData.world  = res.Path; break;
@@ -124,19 +49,23 @@ public class World {
 							default: continue;
 						}
 						res.Used = true;
-					} break;
+						break;
 					default: continue;
 				}
 			}
 		}
 		foreach (var packageData in packages.Values) {
-			loadPackage(packages, packageData.package);
+			loadPackage(packages, packageList, packageData.package);
 		}
-		foreach (EntityContainer container in containers) {
-			container.UpdateBases();
+		foreach (EntityGroup group in Groups) {
+			group.Init();
 		}
+
+		return packageList;
 	}
-	private void loadPackage(Dictionary<string, PackageData> packages, Res.Package package) {
+	private void loadPackage(Dictionary<string, PackageData> packages,
+	                         List<Res.Package> packageList,
+	                         Res.Package package) {
 		// could already be loaded
 		var packageData = packages[package.Name];
 		if (packageData.loaded) return;
@@ -168,7 +97,7 @@ public class World {
 				PackageData dep;
 				string simpleName = StringUtil.Simplify(depName);
 				if (packages.TryGetValue(simpleName, out dep)) {
-					loadPackage(packages, dep.package);
+					loadPackage(packages, packageList, dep.package);
 				} else {
 					Log.Info("'{0}' is not an existing package.", depName);
 				}
@@ -177,71 +106,83 @@ public class World {
 		
 		// load world
 		if (packageData.world != null) {
-			global::Log.Info("Parsing {0}.", packageData.world);
+			Log.Info("Parsing {0}.", packageData.world);
 			var input = new StreamReader(packageData.world);
-			var world = deserializer.Deserialize<Dictionary<string, ContainerData>>(input);
+			var world = deserializer.Deserialize<Dictionary<string, GroupData>>(input);
 			foreach (var pair in world) {
 				string name = StringUtil.Simplify(pair.Key);
-				EntityContainer container = null;
-				// check if container already exists
-				if (!containerD.TryGetValue(name, out container)) {
-					// if it doesnt, create a new one
-					switch (pair.Value.Type) {
-						case ContainerData.Ty.Grid: {
-							container = new GridContainer(name, pair.Value.Dim);
-						} break;
-						case ContainerData.Ty.List: container = new ListContainer(name); break;
+				EntityGroup group;
+				// check if group already exists
+				if (!groupD.TryGetValue(name, out group)) {
+					if (groups.Count >= 256) {
+						throw new InvalidOperationException("Too many groups! ( >256 )");
 					}
-					containers.Add(container);
-					containerD[name] = container;
+					group = new EntityGroup(name, (byte)groups.Count);
+					groups.Add(group);
+					groupD[name] = group;
 				}
 				
 				// load properties
 				if (pair.Value.Properties != null) {
-					loadProperties(pair.Value.Properties, container);
+					loadProperties(pair.Value.Properties, group);
 				}
 				
 				// load bases
 				if (pair.Value.Bases != null) {
-					loadBases(pair.Value.Bases, container);
+					loadBases(pair.Value.Bases, group);
+				}
+
+				if (pair.Value.Components != null) {
+					foreach (ComponentType component in pair.Value.Components) {
+						switch (component) {
+							case ComponentType.GRAPHICAL:
+								group.AddComponent(new GraphicalComponent());
+								break;
+							case ComponentType.GRID:
+								throw new NotImplementedException();
+							case ComponentType.SPACIAL:
+								group.AddComponent(new SpacialComponent());
+								break;
+						}
+					}
 				}
 			}
 		}
-		
-		scripts.Compile(package);
+
+		packageList.Add(package);
 	}
-	private void loadProperties(PropertyData[] data, EntityContainer container) {
+	private static void loadProperties(PropertyData[] data, EntityGroup group) {
 		foreach (PropertyData prop in data) {
 			string propName = StringUtil.Simplify(prop.Name);
-			container.PropertySystem.Add(propName, loadVal(prop));
+			group.PropertySystem.Add(propName, loadVal(prop));
 		}
 	}
-	private void loadBases(Dictionary<string, Dictionary<string, string>>[] data,
-	                       EntityContainer container) {
+	private static void loadBases(Dictionary<string, Dictionary<string, string>>[] data,
+	                              EntityGroup group) {
 		foreach (var baseDataDict in data) {
-			var baseData = baseDataDict.First((_) => true);
+			var baseData = baseDataDict.First(_ => true);
 			string baseName = StringUtil.Simplify(baseData.Key);
-			Entity.Base entityBase = new Entity.Base(container.PropertySystem);
+			Entity.Base entityBase = new Entity.Base(group.PropertySystem);
 			foreach (var valPair in baseData.Value) {
 				string propName = StringUtil.Simplify(valPair.Key);
-				Property prop = container.PropertySystem.WithName(propName);
+				Property prop = group.PropertySystem.WithName(propName);
 				if (prop == null) {
-					Log.Warn("In base {0} in container {1}: '{2}' is not an existing property.",
-							  baseName, container.Name, propName);
+					Log.Warn("In base {0} in group {1}: '{2}' is not an existing property.",
+							  baseName, group.Name, propName);
 					continue;
 				}
 				Val? val = getVal(prop.Value.Type, valPair.Value);
 				if (val == null) {
-					Log.Warn("In base {0} in container {1}: '{2}' is given value of wrong type.",
-							  baseName, container.Name, propName);
+					Log.Warn("In base {0} in group {1}: '{2}' is given value of wrong type.",
+							  baseName, group.Name, propName);
 					continue;
 				}
 				entityBase[prop.Index] = (Val)val;
 			}
-			container.AddBase(baseName, entityBase);
+			group.AddBase(baseName, entityBase);
 		}
 	}
-	private Val loadVal(PropertyData prop) {
+	private static Val loadVal(PropertyData prop) {
 		Val val = new Val(0);
 		switch (prop.Type) {
 			case Val.Ty.Bool:   val = new Val(false); break;
@@ -259,7 +200,7 @@ public class World {
 		}
 		return val;
 	}
-	private Val? getVal(Val.Ty type, string val) {
+	private static Val? getVal(Val.Ty type, string val) {
 		try {
 			switch (type) {
 				case Val.Ty.Bool:   return new Val(Convert.ToBoolean(val));
@@ -273,12 +214,9 @@ public class World {
 		}
 	}
 	
-	private List<EntityContainer> containers = new List<EntityContainer>();
-	private Dictionary<string, EntityContainer> containerD = new Dictionary<string, EntityContainer>();
-	
-	private ScriptManager scripts = new ScriptManager();
-	
-	//ushort currentEntityIndex = 0;
-	//Dictionary<ushort, Tuple<EntityContainer, ushort>> entityIndexD =
-	//	new Dictionary<ushort, Tuple<EntityContainer, ushort>>();
+	private readonly List<EntityGroup> groups = new List<EntityGroup>();
+	public IList<EntityGroup> Groups { get { return groups.AsReadOnly(); } }
+
+	private readonly Dictionary<string, EntityGroup> groupD = new Dictionary<string, EntityGroup>();
+	public IDictionary<string, EntityGroup> GroupDictionary { get { return groupD; } }
 }

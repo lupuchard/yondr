@@ -7,12 +7,16 @@ using System.Security;
 using System.Security.Permissions;
 using System.Security.Policy;
 
+/// Manages the scripting.
+/// Scripts run in a new AppDomain with the help of the script-helper helper library.
 public class ScriptManager {
 	
-	public ScriptManager() {
-		scripts = new List<MethodInfo>[(int)Event.COUNT];
-		for (int i = 0; i < scripts.Length; i++) {
-			scripts[i] = new List<MethodInfo>();
+	public ScriptManager(World world, RendererI renderer) {
+		context = new ScriptContext(world, renderer);
+
+		methods = new List<MethodInfo>[(int)Event.COUNT];
+		for (int i = 0; i < methods.Length; i++) {
+			methods[i] = new List<MethodInfo>();
 		}
 		
 		// Scripts only have execution permissions.
@@ -21,7 +25,8 @@ public class ScriptManager {
 		
 		var helperType = typeof(ScriptHelper);
 		var  helperStrongName = GetStrongName(helperType.Assembly);
-		var contextStrongName = GetStrongName(typeof(IContext).Assembly);
+		var contextStrongName = GetStrongName(typeof(Yondr.IContext).Assembly);
+		var    utilStrongName = GetStrongName(typeof(Vec3<float>).Assembly);
 		
 		// Create appdomain.
 		domain = AppDomain.CreateDomain(
@@ -29,7 +34,7 @@ public class ScriptManager {
 			new Evidence(),
 			new AppDomainSetup(),
 			permissions,
-			new StrongName[] { helperStrongName, contextStrongName }
+			new StrongName[] { helperStrongName, contextStrongName, utilStrongName }
 		);
 		
 		helper = (ScriptHelper)domain.CreateInstanceFromAndUnwrap("script-helper.dll",
@@ -39,7 +44,7 @@ public class ScriptManager {
 		AppDomain.Unload(domain);
 	}
 	
-	private StrongName GetStrongName(Assembly ass) {
+	private static StrongName GetStrongName(Assembly ass) {
 		AssemblyName assemblyName = ass.GetName();
 		byte[] publicKey = assemblyName.GetPublicKey();
 		if (publicKey == null || publicKey.Length == 0) {
@@ -60,11 +65,11 @@ public class ScriptManager {
 			if (pakDate < outDate) {
 				ass = helper.Load(outDir);
 			}
-			if (ass != null) {
-				Log.Info("Loaded {0}", outDir);
-			}
+			if (ass != null) Log.Info("Loaded {0}", outDir);
 		}
 		if (ass == null) {
+			
+			// Get all the scripts in the package.
 			var scripts = new List<string>();
 			foreach (Res.Res res in package.Resources.Values) {
 				if (res.Type == Res.Type.SCRIPT) {
@@ -72,7 +77,10 @@ public class ScriptManager {
 				}
 			}
 			if (scripts.Count == 0) return;
+			
+			// Compile them.
 			var result = helper.Compile(scripts.ToArray(), outDir);
+			
 			if (result.Errors.HasErrors) {
 				Log.Error("Failed to compile {0}:", outDir);
 				foreach (var error in result.Errors) {
@@ -90,8 +98,9 @@ public class ScriptManager {
 			ass = result.CompiledAssembly;
 		}
 		
+		// We look for public static methods in a class called Events,
+		// and add them to our collection of scripts.
 		var flags = BindingFlags.Public | BindingFlags.Static;
-		
 		var events = ass.GetType("Events", false);
 		if (events != null) {
 			foreach (MethodInfo meth in events.GetMethods(flags)) {
@@ -100,12 +109,11 @@ public class ScriptManager {
 					case "Init":   even = Event.INIT;   break;
 					case "Update": even = Event.UPDATE; break;
 					case "Exit":   even = Event.EXIT;   break;
-					default: {
+					default:
 						Log.Warn("{0} does not match any known events. " + 
 						         "If it's a helper function, make it private.",
 						         meth.Name);
 						continue;
-					}
 				}
 				var expectedParams = EventParameters[(int)even];
 				var foundParams    = meth.GetParameters().Select((p, _) => p.ParameterType);
@@ -115,7 +123,7 @@ public class ScriptManager {
 					          meth.Name, expectedParams, foundParams);
 					continue;
 				}
-				scripts[(int)even].Add(meth);
+				methods[(int)even].Add(meth);
 			}
 		}
 	}
@@ -127,29 +135,29 @@ public class ScriptManager {
 		COUNT,
 	}
 	private Type[][] EventParameters = {
-		new Type[] { typeof(IContext) },
-		new Type[] { typeof(IContext), typeof(double) },
-		new Type[] { typeof(IContext) },
+		new Type[] { typeof(Yondr.IContext) },
+		new Type[] { typeof(Yondr.IContext), typeof(double) },
+		new Type[] { typeof(Yondr.IContext) },
 	};
 	
 	public void Init() {
-		foreach (MethodInfo meth in scripts[(int)Event.INIT]) {
+		foreach (MethodInfo meth in methods[(int)Event.INIT]) {
 			meth.Invoke(null, new object[] { context });
 		}
 	}
 	public void Update(double diff) {
-		foreach (MethodInfo meth in scripts[(int)Event.UPDATE]) {
+		foreach (MethodInfo meth in methods[(int)Event.UPDATE]) {
 			meth.Invoke(null, new object[] { context, diff });
 		}
 	}
 	public void Exit() {
-		foreach (MethodInfo meth in scripts[(int)Event.EXIT]) {
+		foreach (MethodInfo meth in methods[(int)Event.EXIT]) {
 			meth.Invoke(null, new object[] { context });
 		}
 	}
 	
-	private readonly ScriptContext context = new ScriptContext();
+	private readonly ScriptContext context;
 	private AppDomain domain;
 	private ScriptHelper helper;
-	private readonly List<MethodInfo>[] scripts;
+	private readonly List<MethodInfo>[] methods;
 }

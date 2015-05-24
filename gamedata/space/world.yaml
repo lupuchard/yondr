@@ -1,0 +1,17 @@
+objects:
+  components: [spacial, graphical]
+  properties:
+    - name: _mesh
+      type: string
+    - name: _texture
+      type: string
+  bases:
+    - yambox: {_mesh: "space:box", _texture: "space:yams"}
+
+mobs:
+  components: [spacial]
+  properties:
+    - name: name
+      type: string
+  bases:
+    - player: {name: "paulerson"}

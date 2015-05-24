@@ -12,6 +12,7 @@ public class ScriptHelper {
 		options.GenerateInMemory     = true;
 		options.OutputAssembly       = outDir;
 		options.ReferencedAssemblies.Add("script-context.dll");
+		options.ReferencedAssemblies.Add("util.dll");
 		
 		var provider = new Microsoft.CSharp.CSharpCodeProvider();
 

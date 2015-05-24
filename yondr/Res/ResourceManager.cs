@@ -60,7 +60,7 @@ public class Manager {
 			var name = StringUtil.Simplify(Path.GetFileNameWithoutExtension(path));
 			if (package.Resources.ContainsKey(name)) {
 				Log.Warn("Resource in package " + package.Name +
-				         " with name " + name + " already exists.");
+				" with name " + name + " already exists.");
 				continue;
 			}
 			
@@ -70,14 +70,18 @@ public class Manager {
 				Type transType = (Type)type.TransformsTo();
 				string transFilename = "_" + name + "." + transType.GetExtension();
 				string transPath = Path.Combine(package.Path, transFilename);
+				bool shouldTransform = false;
 				if (File.Exists(transPath)) {
 					DateTime transDate = File.GetLastWriteTime(transPath);
-					DateTime  prevDate = Directory.GetLastWriteTime(path);
-					if (prevDate < transDate) {
-						type = transType;
+					DateTime prevDate = Directory.GetLastWriteTime(path);
+					if (prevDate > transDate) {
+						shouldTransform = true;
 					}
-				} else using (var transFile = new StreamWriter(transPath)) {
+				} else shouldTransform = true;
+				if (shouldTransform) using (var transFile = new StreamWriter(transPath)) {
 					type = type.Transform(path, transFile);
+				} else {
+					type = transType;
 				}
 				path = transPath;
 			}
@@ -93,17 +97,17 @@ public class Manager {
 		}
 	}
 	private long hash(byte[] data) {
-		long hash = 0;
+		long hashValue = 0;
 		long next = 0;
 		int idx = 0;
 		foreach (byte b in data) {
 			next = (next << 8) + b;
 			if (idx % 8 == 0) {
-				hash ^= next;
+				hashValue ^= next;
 			}
 			idx++;
 		}
-		return hash;
+		return hashValue;
 	}
 
 	/// Tells the resource manager to attempt to load the resource with the given name.

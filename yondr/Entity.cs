@@ -6,23 +6,22 @@ public class Entity {
 	public class Base {
 		public Base(PropertySystem props) {
 			this.PropertySystem  = props;
-			values = new List<Val>();
 			Update();
 		}
+
 		public void Update() {
 			while (values.Count < PropertySystem.Count) {
 				values.Add(PropertySystem.At((ushort)values.Count).Value);
 			}
 		}
 
-		public PropertySystem PropertySystem { get; }
-		
-		private List<Val> values;
-		
 		public Val this[ushort i] {
 			get { return values[i];  }
 			set { values[i] = value; }
 		}
+
+		public PropertySystem PropertySystem { get; }
+		private readonly List<Val> values = new List<Val>();
 	}
 	
 	public Entity(Base bas, ushort idx) {
@@ -35,12 +34,11 @@ public class Entity {
 	private Base bass;
 	public PropertySystem PropertySystem { get { return bass.PropertySystem; } }
 	
-	private Dictionary<ushort, Val> values;
+	private readonly Dictionary<ushort, Val> values = new Dictionary<ushort, Val>();
 	public Val this[ushort i] {
 		get {
 			Val val;
-			if (values.TryGetValue(i, out val)) return val;
-			return bass[i];
+			return values.TryGetValue(i, out val) ? val : bass[i];
 		}
 		set { values.Add(i, value); }
 	}
@@ -51,8 +49,7 @@ public class Entity {
 	public Val? this[string name] {
 		get {
 			Property prop = PropertySystem.WithName(name);
-			if (prop == null) return null;
-			return this[prop];
+			return prop != null ? (Val?)this[prop] : null;
 		}
 		set {
 			Property prop = PropertySystem.WithName(name);

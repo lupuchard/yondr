@@ -34,6 +34,13 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IContext.cs" />
+    <Compile Include="IndexWrappers.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\util\util.csproj">
+      <Project>{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}</Project>
+      <Name>util</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

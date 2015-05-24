@@ -13,7 +13,8 @@ public class Property {
 }
 
 public class PropertySystem {
-	public PropertySystem() {
+	public PropertySystem(byte index) {
+		Index = index;
 		properties = new List<Property>();
 		nameMap    = new Dictionary<string, ushort>();
 	}
@@ -42,6 +43,7 @@ public class PropertySystem {
 		return nameMap.TryGetValue(name, out idx) ? properties[idx] : null;
 	}
 
+	public byte Index { get; }
 	private readonly List<Property> properties;
 	private readonly Dictionary<string, ushort> nameMap;
 }
