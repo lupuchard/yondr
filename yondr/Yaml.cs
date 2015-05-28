@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Numerics;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Core.Events;
-using OpenTK;
 
 /// When parsing a non-scalar, it should accept
 /// strings as other yaml resources to import.
@@ -76,21 +76,12 @@ public class VecNodeDeserializer: INodeDeserializer {
 		} else if (expectedType == typeof(Vector4)) {
 			value = callVec<Vector4, float>(4, reader, nested);
 			return true;
-		} else if (expectedType == typeof(Vector2d)) {
-			value = callVec<Vector2d, double>(2, reader, nested);
-			return true;
-		} else if (expectedType == typeof(Vector3d)) {
-			value = callVec<Vector3d, double>(3, reader, nested);
-			return true;
-		} else if (expectedType == typeof(Vector4)) {
-			value = callVec<Vector4, double>(4, reader, nested);
-			return true;
 		}
 		value = null;
 		return false;
 	}
 	private object callVec<V, T>(int numArgs, EventReader reader,
-	                          Func<EventReader, Type, object> nested) {
+	                             Func<EventReader, Type, object> nested) {
 		reader.Expect<SequenceStart>();
 		var args = new object[numArgs];
 		for (int i = 0; i < args.Length; i++) {

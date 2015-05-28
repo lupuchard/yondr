@@ -42,19 +42,17 @@ class Client {
 
 		Log.Info("Starting window...");
 
-		var display = new Display(
-			client.resManager, world, 600, 600,
-			(renderer) => {
-				Log.Info("Loading scripts...");
+		Game game = new Game(client.resManager, world, 600, 600, (d) => {});
 
-				var scripts = new ScriptManager(world, renderer);
-				foreach (var package in packages) {
-					scripts.Compile(package);
-				}
-				scripts.Init();
-			},
-			(d) => {}
-		);
+		Log.Info("Loading scripts...");
+
+		var scripts = new ScriptManager(world, game.Renderer);
+		foreach (var package in packages) {
+			scripts.Compile(package);
+		}
+		scripts.Init();
+
+		game.Run();
 	}
 	
 	private Client() {

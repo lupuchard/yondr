@@ -10,9 +10,9 @@ using OpenTK.Graphics.OpenGL;
 
 public class Renderer: RendererI {
 	
-	public const float NEAR = -1f;
-	public const float FAR  =  1f;
-	public const float FOVY = 45f;
+	public const float NEAR =  1f;
+	public const float FAR  = 10f;
+	public const float FOVY = (float)Math.PI / 2.0f;
 	
 	public Renderer(Res.Manager resManager, World world) {
 		resources  = resManager;
@@ -40,7 +40,7 @@ public class Renderer: RendererI {
 		
 		calculatePerspective(FOVY, 1, NEAR, FAR);
 
-		GL.ClearColor(Color.Honeydew);
+		GL.ClearColor(Color.Chocolate);
 	}
 	
 	public void Resize(int width, int height) {
@@ -51,8 +51,6 @@ public class Renderer: RendererI {
 		if (camera == null) throw new InvalidOperationException("Camera not set.");
 
 		GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-		
-		GL.Enable(EnableCap.DepthTest);
 
 		Vector3 eye = cameraSpace.Position(Camera);
 		Vector3 dir, at;
@@ -67,10 +65,15 @@ public class Renderer: RendererI {
 		program.Use();
 		int mvpID = GL.GetUniformLocation(program.ID, "mvpMatrix");
 		GL.UniformMatrix4(mvpID, true, ref mvp);
+		int texID = GL.GetUniformLocation(program.ID, "tex");
+		int spID = GL.GetUniformLocation(program.ID, "spMatrix");
+		Matrix4 spMatrix;
 		
 		GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill); // TODO: per mesh
 		
 		for (int i = 0; i < objects.owners.Count; i++) {
+			Entity entity = objects.owners[i];
+
 			GMesh mesh = objects.meshes[i];
 			mesh.Bind();
 			
@@ -84,7 +87,11 @@ public class Renderer: RendererI {
 				default: throw new InvalidOperationException();
 			}
 			
-			GL.Uniform1(GL.GetUniformLocation(program.ID, "tex"), objects.textures[i].ID);
+			GL.Uniform1(texID, objects.textures[i].ID);
+
+			// TODO
+			world.Groups[entity.PropertySystem.Index].GetComponent<SpacialComponent>().Matrix(entity, out spMatrix);
+			GL.UniformMatrix4(spID, false, ref spMatrix);
 
 			GL.DrawElements(primitiveType, geom.Indices.Length, DrawElementsType.UnsignedInt, 0);
 		}
@@ -106,15 +113,7 @@ public class Renderer: RendererI {
 	}
 	
 	private void calculatePerspective(float fovy, float aspect, float near, float far) {
-		float top   = (float)Math.Tan(fovy * Math.PI / 360.0) * near;
-		float right = top * aspect;
-		
-		perspective = new Matrix4(
-			near / right, 0         , 0                           , 0                             ,
-			0           , near / top, 0                           , 0                             ,
-			0           , 0         , -(far + near) / (far - near), -2 * far * near / (far - near),
-			0           , 0         , -1                          , 0
-		);
+		Matrix4.CreatePerspectiveFieldOfView(fovy, aspect, near, far, out perspective);
 	}
 	
 	private class Objects {
@@ -123,9 +122,9 @@ public class Renderer: RendererI {
 			meshes.Add(mesh);
 			textures.Add(tex);
 		}
-		public List<Entity>     owners       = new List<Entity>();
-		public List<GMesh>      meshes       = new List<GMesh>();
-		public List<Texture>    textures     = new List<Texture>();
+		public List<Entity>  owners   = new List<Entity>();
+		public List<GMesh>   meshes   = new List<GMesh>();
+		public List<Texture> textures = new List<Texture>();
 	}
 	
 	private Entity camera = null;
@@ -166,5 +165,10 @@ public static class SpacialComponentExtension {
 			spacial.C[entity.Index],
 			spacial.D[entity.Index]
 		);
+	}
+	public static void Matrix(this SpacialComponent spacial, Entity entity, out Matrix4 mat) {
+		Matrix4 orientation = Matrix4.CreateFromQuaternion(spacial.Orientation(entity));
+		Matrix4 translation = Matrix4.CreateTranslation(spacial.Position(entity));
+		Matrix4.Mult(ref translation, ref orientation, out mat);
 	}
 }

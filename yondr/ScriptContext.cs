@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using OpenTK;
+using System.Numerics;
 
 // An IContext is passed into all the scripting functions.
 // It is defined in the script-context helper library.
@@ -33,7 +33,7 @@ public class ScriptContext: Yondr.IContext {
 		return new EntityIdx(cont.Index, cont.CreateEntity(entityBase).Index);
 	}
 
-	public void EntitySetPosition(EntityIdx entity, Vec3<float> position) {
+	public void EntitySetPosition(EntityIdx entity, Vector3 position) {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
 			Log.Error("Can's set position of non-spacial entity!");
@@ -44,17 +44,17 @@ public class ScriptContext: Yondr.IContext {
 		}
 	}
 
-	public Vec3<float> EntityGetPosition(EntityIdx entity) {
+	public Vector3 EntityGetPosition(EntityIdx entity) {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
 			Log.Error("Can's set position of non-spacial entity!");
-			return new Vec3<float>();
+			return new Vector3(0);
 		} else {
-			return new Vec3<float>(space.X[entity.Idx], space.Y[entity.Idx], space.Z[entity.Idx]);
+			return new Vector3(space.X[entity.Idx], space.Y[entity.Idx], space.Z[entity.Idx]);
 		}
 	}
 
-	public void EntityLookAt(EntityIdx entity, Vec3<float> at) {
+	public void EntityLookAt(EntityIdx entity, Vector3 at) {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
 			Log.Error("Can's set orientation of non-spacial entity!");
@@ -65,7 +65,7 @@ public class ScriptContext: Yondr.IContext {
 		var eye = new Vector3(space.X[idx], space.Y[idx], space.Z[idx]);
 		var atv = new Vector3(at.X, at.Y, at.Z);
 		var up  = new Vector3(0, 1, 0);
-		var mat = Matrix4.LookAt(eye, atv, up);
+		var mat = Matrix4x4.CreateLookAt(eye, atv, up);
 
 		space.A[idx] = (float)Math.Sqrt(1 + mat.M11 + mat.M22 + mat.M33) / 2;
 		space.B[idx] = (mat.M32 - mat.M23) / (4 * space.A[idx]);

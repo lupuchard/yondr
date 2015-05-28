@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "server", "server\server.csproj", "{F9555BF1-A267-4640-92B9-743DB969E92F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "client\client.csproj", "{DE054871-07FE-4482-A8CD-163AAC696822}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "yondr", "yondr\yondr.csproj", "{F09AF069-6A17-4877-99BB-4CA915B49F64}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{806BF5EB-9DCD-4D11-BB21-68ACCCAB3F82}"
@@ -13,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-helper", "script-hel
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-context", "script-context\script-context.csproj", "{A73EDE74-5D87-4702-BC75-4B11BA685E86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "util", "util\util.csproj", "{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "client\client.csproj", "{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,22 +27,18 @@ Global
 		{95FC67BD-EC57-4123-94B3-72E66723D0AD}.Debug|x86.Build.0 = Debug|Any CPU
 		{95FC67BD-EC57-4123-94B3-72E66723D0AD}.Release|x86.ActiveCfg = Release|Any CPU
 		{95FC67BD-EC57-4123-94B3-72E66723D0AD}.Release|x86.Build.0 = Release|Any CPU
-		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Debug|x86.Build.0 = Debug|Any CPU
-		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Release|x86.ActiveCfg = Release|Any CPU
-		{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}.Release|x86.Build.0 = Release|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Debug|x86.Build.0 = Debug|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Release|x86.ActiveCfg = Release|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Release|x86.Build.0 = Release|Any CPU
-		{DE054871-07FE-4482-A8CD-163AAC696822}.Debug|x86.ActiveCfg = Debug|x86
-		{DE054871-07FE-4482-A8CD-163AAC696822}.Debug|x86.Build.0 = Debug|x86
-		{DE054871-07FE-4482-A8CD-163AAC696822}.Release|x86.ActiveCfg = Release|x86
-		{DE054871-07FE-4482-A8CD-163AAC696822}.Release|x86.Build.0 = Release|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Debug|x86.ActiveCfg = Debug|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Debug|x86.Build.0 = Debug|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Release|x86.ActiveCfg = Release|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Release|x86.Build.0 = Release|x86
+		{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}.Debug|x86.ActiveCfg = Debug|x86
+		{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}.Debug|x86.Build.0 = Debug|x86
+		{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}.Release|x86.ActiveCfg = Release|x86
+		{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}.Release|x86.Build.0 = Release|x86
 		{F9555BF1-A267-4640-92B9-743DB969E92F}.Debug|x86.ActiveCfg = Debug|x86
 		{F9555BF1-A267-4640-92B9-743DB969E92F}.Debug|x86.Build.0 = Debug|x86
 		{F9555BF1-A267-4640-92B9-743DB969E92F}.Release|x86.ActiveCfg = Release|x86

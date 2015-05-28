@@ -81,6 +81,7 @@
     <Compile Include="World\SpacialComponent.cs" />
     <Compile Include="RendererI.cs" />
     <Compile Include="World\EntityGroup.cs" />
+    <Compile Include="StringUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />
@@ -92,8 +93,8 @@
     <Reference Include="YamlDotNet">
       <HintPath>..\packages\YamlDotNet.3.6.0\lib\net35\YamlDotNet.dll</HintPath>
     </Reference>
-    <Reference Include="OpenTK">
-      <HintPath>..\packages\OpenTK.1.1.1589.5942\lib\NET40\OpenTK.dll</HintPath>
+    <Reference Include="System.Numerics.Vectors">
+      <HintPath>..\packages\System.Numerics.Vectors.4.0.0\lib\portable-net45+win8+wpa81\System.Numerics.Vectors.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -107,10 +108,6 @@
     <ProjectReference Include="..\script-context\script-context.csproj">
       <Project>{A73EDE74-5D87-4702-BC75-4B11BA685E86}</Project>
       <Name>script-context</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\util\util.csproj">
-      <Project>{9967CFDE-6CEF-4B8F-98B1-59FDF6734724}</Project>
-      <Name>util</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

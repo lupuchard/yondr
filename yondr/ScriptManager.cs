@@ -26,7 +26,6 @@ public class ScriptManager {
 		var helperType = typeof(ScriptHelper);
 		var  helperStrongName = GetStrongName(helperType.Assembly);
 		var contextStrongName = GetStrongName(typeof(Yondr.IContext).Assembly);
-		var    utilStrongName = GetStrongName(typeof(Vec3<float>).Assembly);
 		
 		// Create appdomain.
 		domain = AppDomain.CreateDomain(
@@ -34,7 +33,7 @@ public class ScriptManager {
 			new Evidence(),
 			new AppDomainSetup(),
 			permissions,
-			new StrongName[] { helperStrongName, contextStrongName, utilStrongName }
+			new StrongName[] { helperStrongName, contextStrongName }
 		);
 		
 		helper = (ScriptHelper)domain.CreateInstanceFromAndUnwrap("script-helper.dll",

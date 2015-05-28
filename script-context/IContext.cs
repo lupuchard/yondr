@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Numerics;
 
 namespace Yondr {
 
@@ -7,9 +8,9 @@ public interface IContext {
 
 
 	EntityIdx? CreateEntityI(string group, string bass);
-	void EntitySetPosition(EntityIdx entity, Vec3<float> position);
-	Vec3<float> EntityGetPosition(EntityIdx entity);
-	void EntityLookAt(EntityIdx entity, Vec3<float> position);
+	void EntitySetPosition(EntityIdx entity, Vector3 position);
+	Vector3 EntityGetPosition(EntityIdx entity);
+	void EntityLookAt(EntityIdx entity, Vector3 position);
 
 	void SetCamera(EntityIdx entity);
 }

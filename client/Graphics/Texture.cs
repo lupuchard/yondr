@@ -48,6 +48,10 @@ public class Texture {
 			bmpData.Scan0
 		);
 	}
+
+	~Texture() {
+		GL.DeleteTexture(ID);
+	}
 	
 	public int ID { get; }
 	

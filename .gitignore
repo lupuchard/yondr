@@ -13,7 +13,7 @@ packages/JonSkeet.MiscUtil.*/*
 packages/YamlDotNet.*/*
 packages/clipr.*/*
 packages/OpenTK.*/*
-packages/Sourceforge.Cloo.*/*
+packages/System.Numerics.Vectors.*/*
 
 # Build
 */bin/*

@@ -1,4 +1,5 @@
-﻿
+﻿using System.Numerics;
+
 namespace Yondr {
 
 public static class IContextExtension {
@@ -14,12 +15,12 @@ public static class IContextExtension {
 public struct Entity {
 	public Entity(EntityIdx index, IContext c) { Index = index; Context = c; }
 
-	public Vec3<float> Position {
+	public Vector3 Position {
 		get { return Context.EntityGetPosition(Index); }
 		set { Context.EntitySetPosition(Index, value); }
 	}
 
-	public void LookAt(Vec3<float> position) {
+	public void LookAt(Vector3 position) {
 		Context.EntityLookAt(Index, position);
 	}
 
