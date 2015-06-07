@@ -65,9 +65,9 @@ public class TestRenderer: IRenderer {
 		GL.BindVertexArray(vaoID);
 
 		var vertices = new Vector3[] {
-			new Vector3(-1, -1, 0),
-			new Vector3( 1, -1, 0),
-			new Vector3( 0,  1, 0)
+			new Vector3(-1, -1, 1.2f),
+			new Vector3( 1, -1, 1.8f),
+			new Vector3( 0,  1, 1.5f)
 		};
 
 		var texcoords = new Vector2[] {
@@ -122,6 +122,18 @@ public class TestRenderer: IRenderer {
 
 		GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+		Vector3 eye = cameraSpace.Position(Camera.Index);
+		Vector3 dir, at;
+		float angle;
+		cameraSpace.Orientation(Camera.Index).ToAxisAngle(out dir, out angle);
+		Vector3.Add(ref eye, ref dir, out at);
+		at = new Vector3(0, 0, 1);
+		Vector3 up = new Vector3(0, 1, 0);
+		Matrix4 view = Matrix4.LookAt(eye, at, up);
+
+		Matrix4 mvp;
+		Matrix4.Mult(ref view, ref perspective, out mvp);
+
 		GL.BindVertexArray(vaoID);
 
 		program.Use();
@@ -129,6 +141,10 @@ public class TestRenderer: IRenderer {
 		GL.ActiveTexture(TextureUnit.Texture0);
 		GL.BindTexture(TextureTarget.Texture2D, tex.ID);
 		GL.Uniform1(programTex, 0);
+
+		Matrix4 spMatrix = Matrix4.Identity;
+		GL.UniformMatrix4(programSp, false, ref spMatrix);
+		GL.UniformMatrix4(programMvp, false, ref mvp);
 
 		GL.EnableVertexAttribArray(programPos);
 		GL.EnableVertexAttribArray(programTexcoord);
@@ -226,10 +242,10 @@ public static class SpacialComponentExtension {
 	}
 	public static Quaternion Orientation(this SpacialComponent spacial, int entityIdx) {
 		return new Quaternion(
-			spacial.A[entityIdx],
-			spacial.B[entityIdx],
-			spacial.C[entityIdx],
-			spacial.D[entityIdx]
+			spacial.Qx[entityIdx],
+			spacial.Qy[entityIdx],
+			spacial.Qz[entityIdx],
+			spacial.Qw[entityIdx]
 		);
 	}
 	public static void Matrix(this SpacialComponent spacial, int entityIdx, out Matrix4 mat) {

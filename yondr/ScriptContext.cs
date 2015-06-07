@@ -47,7 +47,7 @@ public class ScriptContext: Yondr.IContext {
 	public Vector3 EntityGetPosition(EntityIdx entity) {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
-			Log.Error("Can's set position of non-spacial entity!");
+			Log.Error("Can't set position of non-spacial entity!");
 			return new Vector3(0);
 		} else {
 			return new Vector3(space.X[entity.Idx], space.Y[entity.Idx], space.Z[entity.Idx]);
@@ -57,20 +57,18 @@ public class ScriptContext: Yondr.IContext {
 	public void EntityLookAt(EntityIdx entity, Vector3 at) {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
-			Log.Error("Can's set orientation of non-spacial entity!");
+			Log.Error("Can't set orientation of non-spacial entity!");
 			return;
 		}
 		int idx = entity.Idx;
 
 		var eye = new Vector3(space.X[idx], space.Y[idx], space.Z[idx]);
-		var atv = new Vector3(at.X, at.Y, at.Z);
-		var up  = new Vector3(0, 1, 0);
-		var mat = Matrix4x4.CreateLookAt(eye, atv, up);
+		var mat = Matrix4x4.CreateLookAt(eye, at, new Vector3(0, 1, 0));
 
-		space.A[idx] = (float)Math.Sqrt(1 + mat.M11 + mat.M22 + mat.M33) / 2;
-		space.B[idx] = (mat.M32 - mat.M23) / (4 * space.A[idx]);
-		space.C[idx] = (mat.M13 - mat.M31) / (4 * space.A[idx]);
-		space.D[idx] = (mat.M21 - mat.M12) / (4 * space.A[idx]);
+		space.Qw[idx] = (float)Math.Sqrt(1 + mat.M11 + mat.M22 + mat.M33) / 2;
+		space.Qx[idx] = (mat.M32 - mat.M23) / (4 * space.Qw[idx]);
+		space.Qy[idx] = (mat.M13 - mat.M31) / (4 * space.Qw[idx]);
+		space.Qz[idx] = (mat.M21 - mat.M12) / (4 * space.Qw[idx]);
 	}
 
 	public void SetCamera(EntityIdx entity) {

@@ -16,7 +16,7 @@ public static class Events {
 		}
 
 		var player = (Entity)context.CreateEntity("mobs", "player");
-		player.LookAt(new Vector3(1, 0, 0));
+		player.LookAt(new Vector3(0, 0, 1));
 		player.SetAsCamera();
 	}
 }
