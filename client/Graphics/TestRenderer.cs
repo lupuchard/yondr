@@ -8,11 +8,12 @@ public class TestRenderer: IRenderer {
 	public TestRenderer(Res.Manager resManager, World world) {
 		Res.Package core = resManager.Packages["core"];
 		program = new Shader.Program(
-			new Shader(core.Resources["vert2"]),
-			new Shader(core.Resources["frag2"])
+			new Shader(core.Resources["vert"]),
+			new Shader(core.Resources["frag"])
 		);
 
-		programPos = GL.GetUniformLocation(program.ID, "vPosition");
+		programPos = (int)program.GetAttrib("vPosition");
+		Log.Info("program pos: {0}", programPos);
 
 		GL.ClearColor(System.Drawing.Color.Chocolate);
 
@@ -43,13 +44,13 @@ public class TestRenderer: IRenderer {
 
 		program.Use();
 
-		GL.EnableVertexAttribArray(0);
+		GL.EnableVertexAttribArray(programPos);
 		GL.BindBuffer(BufferTarget.ArrayBuffer, vboID);
-		GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+		GL.VertexAttribPointer(programPos, 3, VertexAttribPointerType.Float, false, 0, 0);
 
 		GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
 
-		GL.DisableVertexAttribArray(0);
+		GL.DisableVertexAttribArray(programPos);
 
 		GraphicsContext.CurrentContext.SwapBuffers();
 	}

@@ -1,13 +1,13 @@
 #version 130
 
-in vec3 vPosition;
-in vec2 vTexcoord;
+attribute vec3 vPosition;
+attribute vec2 vTexcoord;
 
 uniform mat4 mvpMatrix;
 uniform mat4  spMatrix;
 uniform sampler2D tex;
 
-out vec2 texcoord;
+varying vec2 texcoord;
 
 void main() {
 	texcoord = vTexcoord;

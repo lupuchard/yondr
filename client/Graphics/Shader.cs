@@ -48,6 +48,24 @@ public class Shader {
 		public void Use() {
 			GL.UseProgram(ID);
 		}
+
+		public int? GetUniform(string name) {
+			int index = GL.GetUniformLocation(ID, name);
+			if (index == -1) {
+				Log.Error("Uniform '{0}' cannot be found in shader {1}", name, ID);
+				return null;
+			}
+			return index;
+		}
+
+		public int? GetAttrib(string name) {
+			int index = GL.GetAttribLocation(ID, name);
+			if (index == -1) {
+				Log.Error("Attribute '{0}' cannot be found in shader {1}", name, ID);
+				return null;
+			}
+			return index;
+		}
 		
 		public int ID { get; }
 		public Shader Vert { get; }

@@ -2,7 +2,7 @@
 
 uniform sampler2D tex;
 
-in vec2 texcoord;
+varying vec2 texcoord;
 
 void main() {
 	vec4 color = texture(tex, texcoord);
