@@ -11,6 +11,8 @@ public class Shader {
 		}
 		
 		ID = GL.CreateShader(Type);
+		if (ID == 0) throw new InvalidOperationException("Failed to create shader.");
+
 		int len = res.Data.Length;
 		GL.ShaderSource(ID, Encoding.Default.GetString(res.Data));
 		GL.CompileShader(ID);
@@ -22,7 +24,7 @@ public class Shader {
 			GL.GetShaderInfoLog(ID, out info);
 			Log.Error("Failed to compile {0}.", res.Path);
 			Log.Info(info);
-			throw new InvalidOperationException("Failed to compile.");
+			throw new InvalidOperationException("Failed to compile shader.");
 		}
 	}
 
@@ -52,8 +54,7 @@ public class Shader {
 		public int? GetUniform(string name) {
 			int index = GL.GetUniformLocation(ID, name);
 			if (index == -1) {
-				Log.Error("Uniform '{0}' cannot be found in shader {1}", name, ID);
-				return null;
+				Log.Warn("Uniform '{0}' cannot be found in shader {1}", name, ID);
 			}
 			return index;
 		}
@@ -61,8 +62,7 @@ public class Shader {
 		public int? GetAttrib(string name) {
 			int index = GL.GetAttribLocation(ID, name);
 			if (index == -1) {
-				Log.Error("Attribute '{0}' cannot be found in shader {1}", name, ID);
-				return null;
+				Log.Warn("Attribute '{0}' cannot be found in shader {1}", name, ID);
 			}
 			return index;
 		}

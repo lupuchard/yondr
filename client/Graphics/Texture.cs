@@ -6,10 +6,11 @@ using OpenTK.Graphics.OpenGL;
 public class Texture {
 	
 	public Texture(Res.Res res) {
+		
 		ID = GL.GenTexture();
 		GL.BindTexture(TextureTarget.Texture2D, ID);
 		
-		GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+		//GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 		
 		GL.TexParameter(
 			TextureTarget.Texture2D,
@@ -47,6 +48,8 @@ public class Texture {
 			PixelType.UnsignedByte,
 			bmpData.Scan0
 		);
+
+		Util.CheckGL("texture");
 	}
 
 	~Texture() {

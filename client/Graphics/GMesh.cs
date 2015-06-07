@@ -35,6 +35,8 @@ public class GMesh {
 		GL.GenBuffers(1, out indexID);
 		GL.BindBuffer(elemBuf, indexID);
 		GL.BufferData(elemBuf, (IntPtr)ilen, geom.Indices, BufferUsageHint.DynamicDraw);
+
+		Util.CheckGL("mesh");
 	}
 	~GMesh() {
 		GL.DeleteVertexArrays(1, ref vaoID);

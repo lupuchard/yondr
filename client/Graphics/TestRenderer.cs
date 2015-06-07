@@ -24,10 +24,10 @@ public class TestRenderer: IRenderer {
 		);
 
 		programPos      = (int)program.GetAttrib("vPosition");
-		//programTexcoord = (int)program.GetAttrib("vTexcoord");
-		//programMvp      = (int)program.GetUniform("mvpMatrix");
-		//programSp       = (int)program.GetUniform("spMatrix");
-		//programTex      = (int)program.GetUniform("tex");
+		programTexcoord = (int)program.GetAttrib("vTexcoord");
+		programMvp      = (int)program.GetUniform("mvpMatrix");
+		programSp       = (int)program.GetUniform("spMatrix");
+		programTex      = (int)program.GetUniform("tex");
 
 		foreach (Res.Res res in resources.Resources) {
 			switch (res.Type) {
@@ -61,11 +61,13 @@ public class TestRenderer: IRenderer {
 		GL.GenVertexArrays(1, out vaoID);
 		GL.BindVertexArray(vaoID);
 
-		var vertices  = new Vector3[] {
+		var vertices = new Vector3[] {
 			new Vector3(-1, -1, 0),
 			new Vector3( 1, -1, 0),
 			new Vector3( 0,  1, 0)
 		};
+
+		var indices = new int[] { 0, 1, 2 };
 
 		GL.GenBuffers(1, out vboID);
 		GL.BindBuffer(BufferTarget.ArrayBuffer, vboID);
@@ -74,6 +76,20 @@ public class TestRenderer: IRenderer {
 			new IntPtr(vertices.Length * Vector3.SizeInBytes),
 			vertices, BufferUsageHint.StaticDraw
 		);
+
+		GL.GenBuffers(1, out idxID);
+		GL.BindBuffer(BufferTarget.ElementArrayBuffer, idxID);
+		GL.BufferData<int>(
+			BufferTarget.ElementArrayBuffer,
+			new IntPtr(indices.Length * sizeof(int)),
+			indices, BufferUsageHint.StaticDraw
+		);
+
+		program.Use();
+
+		GL.BindBuffer(BufferTarget.ArrayBuffer, vboID);
+		GL.VertexAttribPointer(programPos, 3, VertexAttribPointerType.Float, false, 0, 0);
+		GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 	}
 	~TestRenderer() {
 		GL.DeleteBuffers(1, ref vboID);
@@ -85,13 +101,13 @@ public class TestRenderer: IRenderer {
 
 		GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+		GL.BindVertexArray(vaoID);
+
 		program.Use();
 
 		GL.EnableVertexAttribArray(programPos);
-		GL.BindBuffer(BufferTarget.ArrayBuffer, vboID);
-		GL.VertexAttribPointer(programPos, 3, VertexAttribPointerType.Float, false, 0, 0);
-
-		GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+		GL.BindBuffer(BufferTarget.ElementArrayBuffer, idxID);
+		GL.DrawElements(BeginMode.Triangles, 3, DrawElementsType.UnsignedInt, 0);
 
 		GL.DisableVertexAttribArray(programPos);
 
@@ -158,14 +174,14 @@ public class TestRenderer: IRenderer {
 	private Dictionary<string, GMesh>   meshes   = new Dictionary<string, GMesh>();
 	private Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
 
-	private int vaoID, vboID;
+	private int vaoID, vboID, idxID;
 
 	private Shader.Program program;
 	private int programPos;
-	//private int programTexcoord;
-	//private int programMvp;
-	//private int programSp;
-	//private int programTex;
+	private int programTexcoord;
+	private int programMvp;
+	private int programSp;
+	private int programTex;
 }
 
 public static class SpacialComponentExtension {
