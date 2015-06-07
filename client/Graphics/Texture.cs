@@ -15,14 +15,15 @@ public class Texture {
 		GL.TexParameter(
 			TextureTarget.Texture2D,
 			TextureParameterName.TextureMinFilter,
-			(int)TextureMinFilter.LinearMipmapLinear
+			//(int)TextureMinFilter.LinearMipmapLinear
+			(int)TextureMinFilter.Linear
 		);
 		GL.TexParameter(
 			TextureTarget.Texture2D,
 			TextureParameterName.TextureMagFilter,
 			(int)TextureMagFilter.Linear
 		);
-		GL.TexParameter(
+		/*GL.TexParameter(
 			TextureTarget.Texture2D,
 			TextureParameterName.TextureWrapS,
 			(int)TextureWrapMode.ClampToEdge
@@ -31,7 +32,7 @@ public class Texture {
 			TextureTarget.Texture2D,
 			TextureParameterName.TextureWrapT,
 			(int)TextureWrapMode.ClampToEdge
-		);
+		);*/
 		
 		Bitmap bmp = new Bitmap(new MemoryStream(res.Data));
 		BitmapData bmpData = bmp.LockBits(
@@ -39,6 +40,11 @@ public class Texture {
 			ImageLockMode.ReadOnly,
 			System.Drawing.Imaging.PixelFormat.Format32bppArgb
 		);
+
+		if ((bmpData.Width  & (bmpData.Width  - 1)) != 0 ||
+		    (bmpData.Height & (bmpData.Height - 1)) != 0) {
+			Log.Warn("Texture {0} is not a power of 2.", res.Name);
+		}
 		
 		GL.TexImage2D(
 			TextureTarget.Texture2D, 0,

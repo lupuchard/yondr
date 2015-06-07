@@ -23,6 +23,9 @@ public class TestRenderer: IRenderer {
 			new Shader(core.Resources["frag"])
 		);
 
+		Res.Package space = resManager.Packages["space"];
+		tex = new Texture(space.Resources["yams"]);
+
 		programPos      = (int)program.GetAttrib("vPosition");
 		programTexcoord = (int)program.GetAttrib("vTexcoord");
 		programMvp      = (int)program.GetUniform("mvpMatrix");
@@ -67,6 +70,12 @@ public class TestRenderer: IRenderer {
 			new Vector3( 0,  1, 0)
 		};
 
+		var texcoords = new Vector2[] {
+			new Vector2(0, 1),
+			new Vector2(1, 1),
+			new Vector2(0.5f, 0),
+		};
+
 		var indices = new int[] { 0, 1, 2 };
 
 		GL.GenBuffers(1, out vboID);
@@ -75,6 +84,14 @@ public class TestRenderer: IRenderer {
 			BufferTarget.ArrayBuffer,
 			new IntPtr(vertices.Length * Vector3.SizeInBytes),
 			vertices, BufferUsageHint.StaticDraw
+		);
+
+		GL.GenBuffers(1, out texID);
+		GL.BindBuffer(BufferTarget.ArrayBuffer, texID);
+		GL.BufferData<Vector2>(
+			BufferTarget.ArrayBuffer,
+			new IntPtr(texcoords.Length * Vector2.SizeInBytes),
+			texcoords, BufferUsageHint.StaticDraw
 		);
 
 		GL.GenBuffers(1, out idxID);
@@ -89,6 +106,10 @@ public class TestRenderer: IRenderer {
 
 		GL.BindBuffer(BufferTarget.ArrayBuffer, vboID);
 		GL.VertexAttribPointer(programPos, 3, VertexAttribPointerType.Float, false, 0, 0);
+
+		GL.BindBuffer(BufferTarget.ArrayBuffer, texID);
+		GL.VertexAttribPointer(programTexcoord, 2, VertexAttribPointerType.Float, false, 0, 0);
+
 		GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 	}
 	~TestRenderer() {
@@ -105,11 +126,20 @@ public class TestRenderer: IRenderer {
 
 		program.Use();
 
+		GL.ActiveTexture(TextureUnit.Texture0);
+		GL.BindTexture(TextureTarget.Texture2D, tex.ID);
+		GL.Uniform1(programTex, 0);
+
 		GL.EnableVertexAttribArray(programPos);
+		GL.EnableVertexAttribArray(programTexcoord);
+
 		GL.BindBuffer(BufferTarget.ElementArrayBuffer, idxID);
 		GL.DrawElements(BeginMode.Triangles, 3, DrawElementsType.UnsignedInt, 0);
 
 		GL.DisableVertexAttribArray(programPos);
+		GL.DisableVertexAttribArray(programTexcoord);
+
+		Util.CheckGL("render");
 
 		GraphicsContext.CurrentContext.SwapBuffers();
 	}
@@ -174,7 +204,9 @@ public class TestRenderer: IRenderer {
 	private Dictionary<string, GMesh>   meshes   = new Dictionary<string, GMesh>();
 	private Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
 
-	private int vaoID, vboID, idxID;
+	private int vaoID, vboID, texID, idxID;
+
+	private Texture tex;
 
 	private Shader.Program program;
 	private int programPos;
