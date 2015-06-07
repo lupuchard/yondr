@@ -318,26 +318,3 @@ public class Renderer: IRenderer {
 	private int programSp;
 	private int programTex;
 }
-
-public static class SpacialComponentExtension {
-	public static Vector3 Position(this SpacialComponent spacial, int entityIdx) {
-		return new Vector3(
-			spacial.X[entityIdx],
-			spacial.Y[entityIdx],
-			spacial.Z[entityIdx]
-		);
-	}
-	public static Quaternion Orientation(this SpacialComponent spacial, int entityIdx) {
-		return new Quaternion(
-			spacial.A[entityIdx],
-			spacial.B[entityIdx],
-			spacial.C[entityIdx],
-			spacial.D[entityIdx]
-		);
-	}
-	public static void Matrix(this SpacialComponent spacial, int entityIdx, out Matrix4 mat) {
-		Matrix4 orientation = Matrix4.CreateFromQuaternion(spacial.Orientation(entityIdx));
-		Matrix4 translation = Matrix4.CreateTranslation(spacial.Position(entityIdx));
-		Matrix4.Mult(ref translation, ref orientation, out mat);
-	}
-}
