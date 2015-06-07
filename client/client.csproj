@@ -44,6 +44,7 @@
     <Compile Include="Graphics\Texture.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="Graphics\TestRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

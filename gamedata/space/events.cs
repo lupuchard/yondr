@@ -9,7 +9,7 @@ public static class Events {
 				for (int z = -1; z <= 1; z++) {
 					if (x != 0 || y != 0 || z != 0) {
 						var yams = (Entity)context.CreateEntity("objects", "yambox");
-						yams.Position = new Vector3(x, y, z);
+						yams.Position = new Vector3(x * 3, y * 3, z * 3);
 					}
 				}
 			}

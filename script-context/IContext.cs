@@ -13,6 +13,11 @@ public interface IContext {
 	void EntityLookAt(EntityIdx entity, Vector3 position);
 
 	void SetCamera(EntityIdx entity);
+
+	/*
+	Val GetPropertyValue(EntityIdx entity, int property);
+	void SetPropertyValue(EntityIdx entity, int property, Val value);
+	*/
 }
 
 }

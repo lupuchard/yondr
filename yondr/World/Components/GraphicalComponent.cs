@@ -1,3 +1,5 @@
+using System;
+
 /// Component for entity groups whose entities can be rendered.
 /// The property system for these groups must contain _mesh and _texture string properties.
 public class GraphicalComponent: IComponent {
@@ -21,10 +23,19 @@ public class GraphicalComponent: IComponent {
 		}
 	}
 	
-	public void Add(Entity entity) { }
-	public void Remove(Entity entity) { }
+	public void Add(Entity entity) {
+		if (Renderer != null) {
+			Renderer.AddObject(entity);
+		}
+	}
+	public void Remove(Entity entity) {
+		if (Renderer != null) {
+			Renderer.RemoveObject(entity);
+		}
+	}
 	
 	private PropertySystem props;
+	public IRenderer Renderer { get; set; } = null;
 	
 	private Property meshProperty;
 	public Property MeshProperty    { get { return meshProperty; } }

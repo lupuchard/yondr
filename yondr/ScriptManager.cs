@@ -11,7 +11,7 @@ using System.Security.Policy;
 /// Scripts run in a new AppDomain with the help of the script-helper helper library.
 public class ScriptManager {
 	
-	public ScriptManager(World world, RendererI renderer) {
+	public ScriptManager(World world, IRenderer renderer) {
 		context = new ScriptContext(world, renderer);
 
 		methods = new List<MethodInfo>[(int)Event.COUNT];
@@ -40,7 +40,7 @@ public class ScriptManager {
 		                                                          "ScriptHelper");
 	}
 	~ScriptManager() {
-		AppDomain.Unload(domain);
+		//AppDomain.Unload(domain); (times out)
 	}
 	
 	private static StrongName GetStrongName(Assembly ass) {

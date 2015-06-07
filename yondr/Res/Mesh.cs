@@ -45,12 +45,11 @@ public class Mesh {
 			}
 			
 			foreach (var cPolylist in cMesh.Polylist) {
-				Source<float> vertices, normals, texcoords;
-				int verticesOffset, normalsOffset, texcoordsOffset;
+				Source<float> vertices, texcoords;
+				int verticesOffset, texcoordsOffset;
 				primitiveInputs(
 					cPolylist.Input, sources,
 					out vertices,  out verticesOffset,
-					out normals,   out normalsOffset,
 					out texcoords, out texcoordsOffset
 				);
 				
@@ -74,7 +73,6 @@ public class Mesh {
 				mesh.Geometries.Add(new Geometry(
 					Primitive.TRIANGLES, false,
 					vertices, offsets[verticesOffset],
-					normals,  offsets[normalsOffset],
 					texcoords, offsets[texcoordsOffset],
 					indices.ToArray()
 				));
@@ -112,18 +110,16 @@ public class Mesh {
 	
 	private static Geometry createGeom(GeometryCommonFields cPrim, Primitive type,
 	                                   Dictionary<Tuple<string, InputSemantic>, object> sources) {
-		Source<float> vertices, normals, texcoords;
-		int verticesOffset, normalsOffset, texcoordsOffset;
+		Source<float> vertices, texcoords;
+		int verticesOffset, texcoordsOffset;
 		primitiveInputs(
 			cPrim.Input, sources,
 			out vertices, out verticesOffset,
-			out normals, out normalsOffset,
 			out texcoords, out texcoordsOffset
 		);
 		return new Geometry(
 			type, true,
 			vertices, verticesOffset * cPrim.Count * vertices.Stride,
-			normals,   normalsOffset * cPrim.Count * normals.Stride,
 			texcoords, texcoordsOffset * cPrim.Count * texcoords.Stride,
 			cPrim.P.Value()
 		);
@@ -131,12 +127,9 @@ public class Mesh {
 	private static void primitiveInputs(InputShared[] inputs, 
 	                                    Dictionary<Tuple<string, InputSemantic>, object> sources,
 	                                    out Source<float> vertices,  out int verticesOffset,
-	                                    out Source<float> normals,   out int normalsOffset,
 	                                    out Source<float> texcoords, out int texcoordsOffset) {
 		vertices  = null;
 		verticesOffset  = 0;
-		normals   = null;
-		normalsOffset   = 0;
 		texcoords = null;
 		texcoordsOffset = 0;
 		foreach (var cIn in inputs) {
@@ -144,10 +137,6 @@ public class Mesh {
 				case InputSemantic.VERTEX:
 					vertices = getSource<float>(sources, cIn, InputSemantic.POSITION);
 					verticesOffset = cIn.Offset;
-					break;
-				case InputSemantic.NORMAL:
-					normals = getSource<float>(sources, cIn);
-					normalsOffset  = cIn.Offset;
 					break;
 				case InputSemantic.TEXCOORD:
 					texcoords = getSource<float>(sources, cIn);
@@ -176,15 +165,12 @@ public class Mesh {
 		public Geometry() { }
 		public Geometry(Primitive type, bool holes,
 		                Source<float> vertices, int verticesOffset,
-						Source<float> normals, int normalsOffset,
 						Source<float> texcoords, int texcoordsOffset,
 						int[] indices) {
 			this.Type       = type;
 			Holes           = holes;
 			Vertices        = vertices;
 			VerticesOffset  = verticesOffset;
-			Normals         = normals;
-			NormalsOffset   = normalsOffset;
 			Texcoords       = texcoords;
 			TexcoordsOffset = texcoordsOffset;
 			Indices         = indices;

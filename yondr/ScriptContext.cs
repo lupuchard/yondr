@@ -6,7 +6,7 @@ using System.Numerics;
 // An IContext is passed into all the scripting functions.
 // It is defined in the script-context helper library.
 public class ScriptContext: Yondr.IContext {
-	public ScriptContext(World w, RendererI r) {
+	public ScriptContext(World w, IRenderer r) {
 		world = w;
 		renderer = r;
 
@@ -80,5 +80,5 @@ public class ScriptContext: Yondr.IContext {
 	
 	private List<SpacialComponent> spacialComponents = new List<SpacialComponent>();
 	private readonly World world;
-	private readonly RendererI renderer;
+	private readonly IRenderer renderer;
 }

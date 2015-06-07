@@ -35,9 +35,6 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Compile Include="PropertySystem.cs" />
-    <Compile Include="Val.cs" />
-    <Compile Include="Entity.cs" />
     <Compile Include="Res\Resource.cs" />
     <Compile Include="Res\ResourceManager.cs" />
     <Compile Include="World\World.cs" />
@@ -74,14 +71,17 @@
     <Compile Include="Res\Collada\Types\IntArrayString.cs" />
     <Compile Include="Res\Collada\Types\ParseUtils.cs" />
     <Compile Include="SerializableDictionary.cs" />
-    <Compile Include="Yaml.cs" />
-    <Compile Include="World\GraphicalComponent.cs" />
-    <Compile Include="World\GridComponent.cs" />
-    <Compile Include="World\IComponent.cs" />
-    <Compile Include="World\SpacialComponent.cs" />
-    <Compile Include="RendererI.cs" />
     <Compile Include="World\EntityGroup.cs" />
     <Compile Include="StringUtil.cs" />
+    <Compile Include="World\Entity.cs" />
+    <Compile Include="World\PropertySystem.cs" />
+    <Compile Include="World\Components\GraphicalComponent.cs" />
+    <Compile Include="World\Components\GridComponent.cs" />
+    <Compile Include="World\Components\IComponent.cs" />
+    <Compile Include="World\Components\SpacialComponent.cs" />
+    <Compile Include="World\Val.cs" />
+    <Compile Include="Res\Yaml.cs" />
+    <Compile Include="IRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />
@@ -112,5 +112,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Res\Collada\" />
+    <Folder Include="World\Components\" />
   </ItemGroup>
 </Project>

@@ -46,6 +46,11 @@ class Client {
 
 		Log.Info("Loading scripts...");
 
+		foreach (EntityGroup g in world.Groups) {
+			var comp = g.GetComponent<GraphicalComponent>();
+			if (comp != null) comp.Renderer = game.Renderer;
+		}
+
 		var scripts = new ScriptManager(world, game.Renderer);
 		foreach (var package in packages) {
 			scripts.Compile(package);

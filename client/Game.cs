@@ -26,7 +26,7 @@ public class Game {
 		window.KeyDown += OnKeyPressed;
 		window.Closing += (sender, e) => done = true;
 
-		this.Renderer = new Renderer(res, world);
+		this.Renderer = new TestRenderer(res, world);
 		updateFunc = update;
 	}
 
@@ -34,12 +34,12 @@ public class Game {
 		window.Visible = true;
 		done = false;
 
-		GL.Enable(EnableCap.DepthTest);
+		/*GL.Enable(EnableCap.DepthTest);
 		GL.DepthMask(true);
 		GL.ClearDepth(1);
-		GL.Enable(EnableCap.Texture2D);
+		GL.Enable(EnableCap.Texture2D);*/
 
-		GL.Viewport(0, 0, window.Width, window.Height);
+		//GL.Viewport(0, 0, window.Width, window.Height);
 
 		var prev = DateTime.Now;
 		while (window.Exists && !done) {
@@ -70,7 +70,7 @@ public class Game {
 		GL.Viewport(0, 0, window.Width, window.Height);
 	}
 
-	public readonly Renderer Renderer;
+	public readonly IRenderer Renderer;
 	private readonly NativeWindow window;
 	private readonly GraphicsContext context;
 	private Action<float> updateFunc;

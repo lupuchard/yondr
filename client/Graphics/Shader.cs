@@ -12,7 +12,7 @@ public class Shader {
 		
 		ID = GL.CreateShader(Type);
 		int len = res.Data.Length;
-		GL.ShaderSource(ID, 1, new string[] {Encoding.Default.GetString(res.Data)}, ref len);
+		GL.ShaderSource(ID, Encoding.Default.GetString(res.Data));
 		GL.CompileShader(ID);
 
 		int statusCode;
@@ -25,15 +25,18 @@ public class Shader {
 			throw new InvalidOperationException("Failed to compile.");
 		}
 	}
-	
+
 	public class Program {
 		public Program(Shader vert, Shader frag) {
 			if (vert.Type != ShaderType.VertexShader)   throw new ArgumentException();
 			if (frag.Type != ShaderType.FragmentShader) throw new ArgumentException();
+
+			Vert = vert;
+			Frag = frag;
 			
 			ID = GL.CreateProgram();
-			GL.AttachShader(vert.ID, ID); // TODO: print shader info logs
-			GL.AttachShader(frag.ID, ID);
+			GL.AttachShader(ID, frag.ID);
+			GL.AttachShader(ID, vert.ID);
 			
 			GL.LinkProgram(ID);
 			GL.UseProgram(ID);

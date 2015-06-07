@@ -14,10 +14,8 @@ public class MeshTest {
 		Assert.AreEqual(false, geom.Holes);
 		Assert.AreEqual(Mesh.Primitive.TRIANGLES, geom.Type);
 		Assert.AreEqual(24, geom.Vertices.Arr.Length);
-		Assert.AreEqual(36, geom.Normals.Arr.Length);
 		Assert.AreEqual(72, geom.Indices.Length);
 		Assert.AreEqual(1, geom.Indices[2]);
-		Assert.AreEqual(36, geom.NormalsOffset);
 	}
 	
 }
