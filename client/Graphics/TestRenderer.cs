@@ -65,9 +65,9 @@ public class TestRenderer: IRenderer {
 		GL.BindVertexArray(vaoID);
 
 		var vertices = new Vector3[] {
-			new Vector3(-1, -1, 1.2f),
-			new Vector3( 1, -1, 1.8f),
-			new Vector3( 0,  1, 1.5f)
+			new Vector3(1.2f, -1, -1),
+			new Vector3(1.8f,  1, -1),
+			new Vector3(1.5f,  0,  1)
 		};
 
 		var texcoords = new Vector2[] {
@@ -122,13 +122,10 @@ public class TestRenderer: IRenderer {
 
 		GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-		Vector3 eye = cameraSpace.Position(Camera.Index);
-		Vector3 dir, at;
-		float angle;
-		cameraSpace.Orientation(Camera.Index).ToAxisAngle(out dir, out angle);
-		Vector3.Add(ref eye, ref dir, out at);
-		at = new Vector3(0, 0, 1);
-		Vector3 up = new Vector3(0, 1, 0);
+		var eye = cameraSpace.Position(Camera.Index);
+		var dir = cameraSpace.GetDirection(Camera.Index).ToOpenTK();
+		var up  = cameraSpace.GetUp(       Camera.Index).ToOpenTK();
+		var at = eye + dir;
 		Matrix4 view = Matrix4.LookAt(eye, at, up);
 
 		Matrix4 mvp;
@@ -252,5 +249,14 @@ public static class SpacialComponentExtension {
 		Matrix4 orientation = Matrix4.CreateFromQuaternion(spacial.Orientation(entityIdx));
 		Matrix4 translation = Matrix4.CreateTranslation(spacial.Position(entityIdx));
 		Matrix4.Mult(ref translation, ref orientation, out mat);
+	}
+}
+
+public static class VectorConversion {
+	public static Vector3 ToOpenTK(this System.Numerics.Vector3 vec) {
+		return new Vector3(vec.X, vec.Y, vec.Z);
+	}
+	public static System.Numerics.Vector3 ToNumerics(this Vector3 vec) {
+		return new System.Numerics.Vector3(vec.X, vec.Y, vec.Z);
 	}
 }

@@ -3,7 +3,7 @@
 [TestFixture]
 public class PropertySystemTest {
 	[Test]
-	public void UseageTest() {
+	public void UsageTest() {
 		var props = new PropertySystem(0);
 		props.Add("fred", new Val(4.5));
 		props.Add("paul", new Val("paulerson"));

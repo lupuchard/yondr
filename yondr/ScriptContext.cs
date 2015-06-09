@@ -62,13 +62,10 @@ public class ScriptContext: Yondr.IContext {
 		}
 		int idx = entity.Idx;
 
-		var eye = new Vector3(space.X[idx], space.Y[idx], space.Z[idx]);
-		var mat = Matrix4x4.CreateLookAt(eye, at, new Vector3(0, 1, 0));
-
-		space.Qw[idx] = (float)Math.Sqrt(1 + mat.M11 + mat.M22 + mat.M33) / 2;
-		space.Qx[idx] = (mat.M32 - mat.M23) / (4 * space.Qw[idx]);
-		space.Qy[idx] = (mat.M13 - mat.M31) / (4 * space.Qw[idx]);
-		space.Qz[idx] = (mat.M21 - mat.M12) / (4 * space.Qw[idx]);
+		var dir = Vector3.Normalize(at - new Vector3(space.X[idx], space.Y[idx], space.Z[idx]));
+		space.ResetOrientation(idx);
+		space.RotateY(idx, (float)Math.Atan2(dir.X, dir.Z));
+		space.RotateX(idx, (float)Math.Atan2(dir.Y, dir.X));
 	}
 
 	public void SetCamera(EntityIdx entity) {

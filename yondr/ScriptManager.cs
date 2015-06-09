@@ -56,26 +56,28 @@ public class ScriptManager {
 	public void Compile(Res.Package package) {
 		string outDir = "_" + package.Name + ".dll";
 		Assembly ass = null;
+
+		// Get all the scripts in the package.
+		DateTime pakDate = DateTime.MinValue;
+		var scripts = new List<string>();
+		foreach (Res.Res res in package.Resources.Values) {
+			if (res.Type == Res.Type.SCRIPT) {
+				scripts.Add(res.Path);
+				DateTime scriptDate = File.GetLastWriteTime(res.Path);
+				if (scriptDate > pakDate) {
+					pakDate = scriptDate;
+				}
+			}
+		}
+		if (scripts.Count == 0) return;
 		
 		// Check if package is already compiled.
 		if (File.Exists(outDir)) {
 			DateTime outDate = File.GetLastWriteTime(outDir);
-			DateTime pakDate = Directory.GetLastWriteTime(package.Path);
-			if (pakDate < outDate) {
-				ass = helper.Load(outDir);
-			}
+			if (pakDate < outDate) ass = helper.Load(outDir);
 			if (ass != null) Log.Info("Loaded {0}", outDir);
 		}
 		if (ass == null) {
-			
-			// Get all the scripts in the package.
-			var scripts = new List<string>();
-			foreach (Res.Res res in package.Resources.Values) {
-				if (res.Type == Res.Type.SCRIPT) {
-					scripts.Add(res.Path);
-				}
-			}
-			if (scripts.Count == 0) return;
 			
 			// Compile them.
 			var result = helper.Compile(scripts.ToArray(), outDir);
