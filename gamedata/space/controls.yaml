@@ -1,0 +1,7 @@
+﻿forward:      [up,    w]
+backward:     [down,  s]
+strafe_left:  [left,  a]
+strafe_right: [right, d]
+turn_left:    q
+turn_right:   e
+exit:         escape

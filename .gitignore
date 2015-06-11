@@ -14,6 +14,7 @@ packages/YamlDotNet.*/*
 packages/clipr.*/*
 packages/OpenTK.*/*
 packages/System.Numerics.Vectors.*/*
+packages/AssimpNet.*/*
 
 # Build
 */bin/*

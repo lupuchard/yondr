@@ -11,8 +11,8 @@ using System.Security.Policy;
 /// Scripts run in a new AppDomain with the help of the script-helper helper library.
 public class ScriptManager {
 	
-	public ScriptManager(World world, IRenderer renderer) {
-		context = new ScriptContext(world, renderer);
+	public ScriptManager(World world, IRenderer renderer, IControls controls) {
+		context = new ScriptContext(world, renderer, controls);
 
 		methods = new List<MethodInfo>[(int)Event.COUNT];
 		for (int i = 0; i < methods.Length; i++) {
@@ -137,7 +137,7 @@ public class ScriptManager {
 	}
 	private Type[][] EventParameters = {
 		new Type[] { typeof(Yondr.IContext) },
-		new Type[] { typeof(Yondr.IContext), typeof(double) },
+		new Type[] { typeof(Yondr.IContext), typeof(float) },
 		new Type[] { typeof(Yondr.IContext) },
 	};
 	
@@ -146,7 +146,7 @@ public class ScriptManager {
 			meth.Invoke(null, new object[] { context });
 		}
 	}
-	public void Update(double diff) {
+	public void Update(float diff) {
 		foreach (MethodInfo meth in methods[(int)Event.UPDATE]) {
 			meth.Invoke(null, new object[] { context, diff });
 		}

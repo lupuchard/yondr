@@ -10,12 +10,17 @@ public enum Type {
 	UNKNOWN,
 	YAML,    // YAML data file
 	SCRIPT,  // CSharp script
-	PNG,     // PNG image file
-	JPG,     // JPEG image file
-	COLLADA, // Collada mesh file. Transforms to MESH
-	MESH,    // Custom mesh format
-	VERT,    // GLSL fragment shader
-	FRAG,    // GLSL vertex shader
+
+	// Image formats
+	BMP, GIF, JPG, PNG, // tiff, xif
+
+	// Mesh formats. They all transform to MESH.
+	OBJ, MD3, COLLADA, BLENDER, // md2
+
+	MESH, // Custom mesh format
+
+	VERT, // GLSL fragment shader
+	FRAG, // GLSL vertex shader
 };
 	
 public static class TypeMethods {
@@ -24,10 +29,14 @@ public static class TypeMethods {
 			case Type.UNKNOWN: return "what";
 			case Type.YAML:    return "yaml";
 			case Type.SCRIPT:  return "cs";
+			
+			case Type.BMP:     return "bmp";
+			case Type.GIF:     return "gif";
 			case Type.PNG:     return "png";
 			case Type.JPG:     return "jpg";
-			case Type.COLLADA: return "dae";
+
 			case Type.MESH:    return "ym";
+				
 			case Type.VERT:    return "vert";
 			case Type.FRAG:    return "frag";
 			default: throw new System.ArgumentOutOfRangeException();
@@ -38,15 +47,24 @@ public static class TypeMethods {
 			case ".yaml":
 			case ".yml":   return Type.YAML;
 			case ".cs":    return Type.SCRIPT;
+
+			case ".bmp":   return Type.BMP;
+			case ".gif":   return Type.GIF;
 			case ".jpeg":
 			case ".jpg":   return Type.JPG;
 			case ".png":   return Type.PNG;
+				
+			case ".obj":   return Type.OBJ;
+			case ".md3":   return Type.MD3;
 			case ".dae":   return Type.COLLADA;
+			case ".blend": return Type.BLENDER;
 			case ".ym":    return Type.MESH;
+				
 			case ".glslv":
 			case ".vert":  return Type.VERT;
 			case ".glslf":
 			case ".frag":  return Type.FRAG;
+
 			default:       return Type.UNKNOWN;
 		}
 	}

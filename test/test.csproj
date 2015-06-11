@@ -37,6 +37,10 @@
       <Project>{F09AF069-6A17-4877-99BB-4CA915B49F64}</Project>
       <Name>yondr</Name>
     </ProjectReference>
+    <ProjectReference Include="..\client\client.csproj">
+      <Project>{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}</Project>
+      <Name>client</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PropertySystemTest.cs" />

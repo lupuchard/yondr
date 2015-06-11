@@ -11,7 +11,7 @@ using OpenTK.Graphics.OpenGL;
 public class Renderer: IRenderer {
 	
 	public const float NEAR = 0.1f;
-	public const float FAR  = 10f;
+	public const float FAR  = 100f;
 	public const float FOVY = (float)Math.PI / 2.0f;
 	
 	public Renderer(Res.Manager resManager, World world) {
@@ -35,7 +35,9 @@ public class Renderer: IRenderer {
 				case Res.Type.MESH:
 					IFormatter formatter = new BinaryFormatter();
 					Mesh mesh = (Mesh)formatter.Deserialize(new MemoryStream(res.Data));
-					meshes.Add(res.Package.Name + ":" + res.Name, new GMesh(mesh));
+					GMesh gmesh = new GMesh(mesh);
+					gmesh.Link(program, programPos, programTexcoord);
+					meshes.Add(res.Package.Name + ":" + res.Name, gmesh);
 					break;
 				case Res.Type.PNG:
 				case Res.Type.JPG:

@@ -19,9 +19,24 @@ public struct Entity {
 		get { return Context.EntityGetPosition(Index); }
 		set { Context.EntitySetPosition(Index, value); }
 	}
+	public void Move(Vector3 amount) {
+		Context.EntityMove(Index, amount);
+	}
 
 	public void LookAt(Vector3 position) {
 		Context.EntityLookAt(Index, position);
+	}
+	public void RotateX(float radians) {
+		Context.EntityRotateX(Index, radians);
+	}
+	public void RotateY(float radians) {
+		Context.EntityRotateY(Index, radians);
+	}
+	public void RotateZ(float radians) {
+		Context.EntityRotateZ(Index, radians);
+	}
+	public Vector3 Direction {
+		get { return Context.EntityGetDirection(Index); }
 	}
 
 	public void SetAsCamera() {

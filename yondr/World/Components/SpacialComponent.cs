@@ -27,17 +27,6 @@ public class SpacialComponent: IComponent {
 
 	public void Remove(Entity entity) { }
 
-	public void NormalizeOrientation(int idx) {
-		float len = (float)Math.Sqrt(Qw[idx] * Qw[idx] +
-		                             Qx[idx] * Qx[idx] +
-		                             Qy[idx] * Qy[idx] +
-		                             Qz[idx] * Qz[idx]);
-		Qw[idx] /= len;
-		Qx[idx] /= len;
-		Qy[idx] /= len;
-		Qz[idx] /= len;
-	}
-
 	// The identity orientation is facing up (positive z-axis)
 	// with the "up" along the negative x-axis.
 	public void ResetOrientation(int idx) {

@@ -46,6 +46,7 @@
     <Compile Include="Game.cs" />
     <Compile Include="Graphics\TestRenderer.cs" />
     <Compile Include="Graphics\Util.cs" />
+    <Compile Include="Controls.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

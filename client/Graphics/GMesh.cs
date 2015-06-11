@@ -11,45 +11,71 @@ public class GMesh {
 		// Create and initialize a vertex array object
 		GL.GenVertexArrays(1, out vaoID);
 		GL.BindVertexArray(vaoID);
-	
-		int vlen = geom.Vertices. Arr.Length * sizeof(float);
-		int tlen = geom.Texcoords.Arr.Length * sizeof(float);
-		int ilen = geom.Indices.Length       * sizeof(int);
-		
-		BufferTarget arrBuf  = BufferTarget.ArrayBuffer;
-		BufferTarget elemBuf = BufferTarget.ElementArrayBuffer;
-		
-		// Create and initialize a buffer object
-		GL.GenBuffers(1, out vboID);
-		GL.BindBuffer(arrBuf, vboID);
-		GL.BufferData(arrBuf,
-			(IntPtr)(vlen + tlen),
-			(IntPtr)0, BufferUsageHint.DynamicDraw // TODO: better hint?
+
+		// Vertex buffer
+		GL.GenBuffers(1, out vertID);
+		GL.BindBuffer(BufferTarget.ArrayBuffer, vertID);
+		GL.BufferData(
+			BufferTarget.ArrayBuffer,
+			new IntPtr(geom.Vertices.Arr.Length * sizeof(float)),
+			geom.Vertices.Arr, BufferUsageHint.StaticDraw
 		);
-		
-		// Set the buffer data
-		GL.BufferSubData(arrBuf, (IntPtr)0            , (IntPtr)vlen, geom.Vertices.Arr);
-		GL.BufferSubData(arrBuf, (IntPtr)vlen         , (IntPtr)tlen, geom.Texcoords.Arr);
 
-		// Bind the index buffer
+		// Texcoord buffer
+		GL.GenBuffers(1, out texID);
+		GL.BindBuffer(BufferTarget.ArrayBuffer, texID);
+		GL.BufferData(
+			BufferTarget.ArrayBuffer,
+			new IntPtr(geom.Texcoords.Arr.Length * sizeof(float)),
+			geom.Texcoords.Arr, BufferUsageHint.StaticDraw
+		);
+
+		Log.Info("kay {0}", geom.NormalsOffset - geom.VerticesOffset);
+		Log.Info("{0}", string.Join(",", geom.Vertices.Arr));
+		Log.Info("{0}", string.Join(",", geom.Indices));
+
+		// Index buffer
 		GL.GenBuffers(1, out indexID);
-		GL.BindBuffer(elemBuf, indexID);
-		GL.BufferData(elemBuf, (IntPtr)ilen, geom.Indices, BufferUsageHint.DynamicDraw);
+		GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexID);
+		GL.BufferData(
+			BufferTarget.ElementArrayBuffer,
+			new IntPtr((geom.NormalsOffset - geom.VerticesOffset) * sizeof(int)),
+			geom.Indices, BufferUsageHint.StaticDraw
+		);
 
-		Util.CheckGL("mesh");
+		Util.CheckGL("create mesh");
 	}
 	~GMesh() {
 		GL.DeleteVertexArrays(1, ref vaoID);
-		GL.DeleteBuffers(     1, ref vboID);
-		GL.DeleteBuffers(     1, ref indexID);
+		GL.DeleteBuffers(1, ref vertID);
+		GL.DeleteBuffers(1, ref texID);
+		GL.DeleteBuffers(1, ref indexID);
+
+		Util.CheckGL("delete mesh");
 	}
-	
-	public void Bind() {
-		GL.BindVertexArray(vaoID);
+
+	public void Link(Shader.Program program, int posAttrib, int texcoordAttrib) {
+		program.Use();
+
+		GL.BindBuffer(BufferTarget.ArrayBuffer, vertID);
+		GL.VertexAttribPointer(posAttrib, 3, VertexAttribPointerType.Float, false, 0, 0);
+
+		GL.BindBuffer(BufferTarget.ArrayBuffer, texID);
+		GL.VertexAttribPointer(texcoordAttrib, 2, VertexAttribPointerType.Float, false, 0, 0);
+
+		GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+		Util.CheckGL("link mesh");
 	}
 	
 	public Mesh Mesh { get; }
+
 	private int vaoID;
-	private int vboID;
+	public int VaoID { get { return vaoID; } }
+
+	private int vertID;
+	private int texID;
+
 	private int indexID;
+	public int IndexID { get { return indexID; } }
 }

@@ -7,7 +7,7 @@ using OpenTK.Graphics.OpenGL;
 
 public class Game {
 
-	public Game(Res.Manager res, World world, uint width, uint height, Action<float> update) {
+	public Game(Res.Manager res, World world, uint width, uint height) {
 		Toolkit.Init();
 
 		window = new NativeWindow(
@@ -27,10 +27,11 @@ public class Game {
 		window.Closing += (sender, e) => done = true;
 
 		this.Renderer = new TestRenderer(res, world);
-		updateFunc = update;
+
+		this.Controls = world.Controls;
 	}
 
-	public void Run() {
+	public void Run(Action<float> updateFunc) {
 		window.Visible = true;
 		done = false;
 
@@ -59,7 +60,6 @@ public class Game {
 	}
 
 	private void OnKeyPressed(object sender, KeyboardKeyEventArgs e) {
-		Log.Info("press");
 		if (e.Key == Key.Escape) {
 			done = true;
 			window.Close();
@@ -70,9 +70,9 @@ public class Game {
 		GL.Viewport(0, 0, window.Width, window.Height);
 	}
 
-	public readonly IRenderer Renderer;
+	public IControls Controls { get; }
+	public IRenderer Renderer { get; }
 	private readonly NativeWindow window;
 	private readonly GraphicsContext context;
-	private Action<float> updateFunc;
 	private bool done = false;
 }

@@ -23,10 +23,10 @@ public class World {
 			this.package = package;
 		}
 		public Res.Package package;
-		public string deps   = null;
-		public string world  = null;
-		public string events = null;
-		public bool loaded   = false;
+		public string deps     = null;
+		public string world    = null;
+		public string controls = null;
+		public bool loaded     = false;
 	}
 
 	/// Loads all the world data from the resource manager.
@@ -43,9 +43,9 @@ public class World {
 				switch (res.Type) {
 					case Res.Type.YAML:
 						switch (res.Name) {
-							case "deps":   packageData.deps   = res.Path; break;
-							case "world":  packageData.world  = res.Path; break;
-							case "events": packageData.events = res.Path; break;
+							case "deps":     packageData.deps     = res.Path; break;
+							case "world":    packageData.world    = res.Path; break;
+							case "controls": packageData.controls = res.Path; break;
 							default: continue;
 						}
 						res.Used = true;
@@ -149,6 +149,18 @@ public class World {
 			}
 		}
 
+		// load controls
+		if (Controls != null && packageData.controls != null) {
+			Log.Info("Parsing {0}.", packageData.controls);
+			var input = new StreamReader(packageData.controls);
+			var map = deserializer.Deserialize<Dictionary<string, string[]>>(input);
+			foreach (var pair in map) {
+				foreach (string key in pair.Value) {
+					Controls.Add(key, pair.Key);
+				}
+			}
+		}
+
 		packageList.Add(package);
 	}
 	private static void loadProperties(PropertyData[] data, EntityGroup group) {
@@ -219,4 +231,6 @@ public class World {
 
 	private readonly Dictionary<string, EntityGroup> groupD = new Dictionary<string, EntityGroup>();
 	public IDictionary<string, EntityGroup> GroupDictionary { get { return groupD; } }
+
+	public IControls Controls { get; set; }
 }

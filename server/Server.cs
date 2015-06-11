@@ -33,7 +33,7 @@ class Server {
 
 		var world    = new World();
 		var packages = world.Load(server.resManager);
-		var scripts = new ScriptManager(world, null);
+		var scripts = new ScriptManager(world, null, null);
 		foreach (var package in packages) {
 			scripts.Compile(package);
 		}
@@ -75,11 +75,11 @@ class Server {
 			var now = DateTime.Now;
 			double diff = (now - prev).TotalSeconds;
 			if (diff > 1.0 / Net.LogicalFPS) {
-				scripts.Update(diff);
+				scripts.Update((float)diff);
 			} else {
 				Thread.Sleep((prev + new TimeSpan(0, 0, 0, 0, 1000 / Net.LogicalFPS)) - now);
 				diff = (DateTime.Now - prev).TotalSeconds;
-				scripts.Update(diff);
+				scripts.Update((float)diff);
 			}
 			prev = now;
 		}

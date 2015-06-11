@@ -6,9 +6,10 @@ using System.Numerics;
 // An IContext is passed into all the scripting functions.
 // It is defined in the script-context helper library.
 public class ScriptContext: Yondr.IContext {
-	public ScriptContext(World w, IRenderer r) {
-		world = w;
+	public ScriptContext(World w, IRenderer r, IControls c) {
+		world    = w;
 		renderer = r;
+		controls = c;
 
 		foreach (var group in w.Groups) {
 			spacialComponents.Add(group.GetComponent<SpacialComponent>());
@@ -16,6 +17,11 @@ public class ScriptContext: Yondr.IContext {
 	}
 
 	public TextWriter Out { get { return Console.Out; } }
+
+	public bool Control(string control) {
+		if (controls == null) return false;
+		return controls.IsDown(control);
+	}
 
 	public EntityIdx? CreateEntityI(string group, string bass) {
 		EntityGroup cont = world.GroupDictionary[group];
@@ -37,21 +43,29 @@ public class ScriptContext: Yondr.IContext {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
 			Log.Error("Can's set position of non-spacial entity!");
-		} else {
-			space.X[entity.Idx] = position.X;
-			space.Y[entity.Idx] = position.Y;
-			space.Z[entity.Idx] = position.Z;
+			return;
 		}
+		space.X[entity.Idx] = position.X;
+		space.Y[entity.Idx] = position.Y;
+		space.Z[entity.Idx] = position.Z;
 	}
-
 	public Vector3 EntityGetPosition(EntityIdx entity) {
 		var space = spacialComponents[entity.Group];
 		if (space == null) {
-			Log.Error("Can't set position of non-spacial entity!");
+			Log.Error("Can't get position of non-spacial entity!");
 			return new Vector3(0);
-		} else {
-			return new Vector3(space.X[entity.Idx], space.Y[entity.Idx], space.Z[entity.Idx]);
 		}
+		return new Vector3(space.X[entity.Idx], space.Y[entity.Idx], space.Z[entity.Idx]);
+	}
+	public void EntityMove(EntityIdx entity, Vector3 amount) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can't move non-spacial entity!");
+			return;
+		}
+		space.X[entity.Idx] += amount.X;
+		space.Y[entity.Idx] += amount.Y;
+		space.Z[entity.Idx] += amount.Z;
 	}
 
 	public void EntityLookAt(EntityIdx entity, Vector3 at) {
@@ -67,6 +81,38 @@ public class ScriptContext: Yondr.IContext {
 		space.RotateY(idx, (float)Math.Atan2(dir.X, dir.Z));
 		space.RotateX(idx, (float)Math.Atan2(dir.Y, dir.X));
 	}
+	public void EntityRotateX(EntityIdx entity, float radians) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can't rotate non-spacial entity!");
+			return;
+		}
+		space.RotateX(entity.Idx, radians);
+	}
+	public void EntityRotateY(EntityIdx entity, float radians) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can't rotate non-spacial entity!");
+			return;
+		}
+		space.RotateY(entity.Idx, radians);
+	}
+	public void EntityRotateZ(EntityIdx entity, float radians) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can't rotate non-spacial entity!");
+			return;
+		}
+		space.RotateZ(entity.Idx, radians);
+	}
+	public Vector3 EntityGetDirection(EntityIdx entity) {
+		var space = spacialComponents[entity.Group];
+		if (space == null) {
+			Log.Error("Can't rotate non-spacial entity!");
+			return new Vector3(0);
+		}
+		return space.GetDirection(entity.Idx);
+	}
 
 	public void SetCamera(EntityIdx entity) {
 		if (renderer == null) return;
@@ -76,4 +122,5 @@ public class ScriptContext: Yondr.IContext {
 	private List<SpacialComponent> spacialComponents = new List<SpacialComponent>();
 	private readonly World world;
 	private readonly IRenderer renderer;
+	private readonly IControls controls;
 }

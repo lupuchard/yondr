@@ -11,7 +11,7 @@ public static class StringUtil {
 		foreach (char c in s) {
 			if (char.IsLetterOrDigit(c) || c == '.') {
 				builder.Append(char.ToLower(c));
-			} else if (c == '-' || c == '_') {
+			} else if (char.IsWhiteSpace(c) || c == '-' || c == '_') {
 				builder.Append('_');
 			}
 		}

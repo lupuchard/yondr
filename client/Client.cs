@@ -38,11 +38,12 @@ class Client {
 		Log.Info("Successfully connected.");
 
 		var world = new World();
+		world.Controls = new Controls();
 		var packages = world.Load(client.resManager);
 
 		Log.Info("Starting window...");
 
-		Game game = new Game(client.resManager, world, 600, 600, (d) => {});
+		Game game = new Game(client.resManager, world, 600, 600);
 
 		Log.Info("Loading scripts...");
 
@@ -51,17 +52,16 @@ class Client {
 			if (comp != null) comp.Renderer = game.Renderer;
 		}
 
-		var scripts = new ScriptManager(world, game.Renderer);
+		var scripts = new ScriptManager(world, game.Renderer, game.Controls);
 		foreach (var package in packages) {
 			scripts.Compile(package);
 		}
 		scripts.Init();
 
-		game.Run();
+		game.Run((d) => { scripts.Update(d); });
 	}
 	
 	private Client() {
-		
 		resManager = new Res.Manager("cache");
 	}
 	

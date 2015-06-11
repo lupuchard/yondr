@@ -16,8 +16,9 @@ public class ImportNodeDeserializer: INodeDeserializer {
 	}
 
 	public bool Deserialize(EventReader reader, Type expectedType,
-		Func<EventReader, Type, object> nested,
-		out object value) {
+	                        Func<EventReader, Type, object> nested,
+	                        out object value) {
+
 		if (expectedType.IsValueType || expectedType == typeof(string)) {
 			value = null;
 			return false;
@@ -27,6 +28,19 @@ public class ImportNodeDeserializer: INodeDeserializer {
 			value = null;
 			return false;
 		}
+
+		// If the expected type is an array of scalars, then a scalar will
+		// be interpreted as an array of length 1 instead of a file name.
+		if (expectedType.IsArray) {
+			Type innerType = expectedType.GetElementType();
+			if (innerType.IsValueType || innerType == typeof(string)) {
+				var arr = Array.CreateInstance(innerType, 1);
+				arr.SetValue(Convert.ChangeType(scalar.Value, innerType), 0);
+				value = arr;
+				return true;
+			}
+		}
+
 		var resName = StringUtil.Simplify(Path.GetFileNameWithoutExtension(scalar.Value));
 		var res = package.Resources[resName];
 		if (res.Type != Res.Type.YAML) {
