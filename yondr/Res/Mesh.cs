@@ -1,191 +1,70 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
-using Collada;
+using System.Numerics;
+using Assimp;
+using Assimp.Configs;
 
 [Serializable]
 public class Mesh {
-	
-	// Converts a Collada mesh into our own "superior" mesh format.
-	public static Mesh FromCollada(string path) {
-		try {
-			return fromCollada(path);
-		} catch (Exception e) {
-			if (e is NullReferenceException    ||
-			    e is InvalidCastException      ||
-			    e is KeyNotFoundException      ||
-				e is InvalidOperationException ||
-			    e is ArgumentException) {
-				Log.Error("Could not load mesh {0}", path);
-				Log.Debug("Because: {0}", e.Message);
-			} else throw;
-		}
-		return null;
-	}
-	private static Mesh fromCollada(string path) {
-		Mesh mesh = new Mesh();
-		var collada = ColladaFile.Load(path);
-		var cGeoms = collada.LibraryGeometries;
-		var sources = new Dictionary<Tuple<string, InputSemantic>, object>();
-		foreach (var cGeom in cGeoms.Geometry) {
-			if (cGeom.Mesh == null) {
-				Log.Warn("Only mesh geometries are yet supported. ({0})", path);
-				continue;
-			}
-			var cMesh = cGeom.Mesh;
-			foreach (var cSource in cMesh.Source) {
-				sources.Add(Tuple.Create(cSource.ID, InputSemantic.NONE), readSource(cSource));
-			}
-			
-			var cVerts = cMesh.Vertices;
-			foreach (var cInput in cVerts.Input) {
-				sources.Add(
-					Tuple.Create(cVerts.ID, cInput.Semantic),
-					sources[Tuple.Create(cInput.source.Substring(1), InputSemantic.NONE)]
-				);
-			}
-			
-			foreach (var cPolylist in cMesh.Polylist) {
-				Source<float> vertices, texcoords;
-				int verticesOffset, texcoordsOffset;
-				primitiveInputs(
-					cPolylist.Input, sources,
-					out vertices,  out verticesOffset,
-					out texcoords, out texcoordsOffset
-				);
-				
-				// convert polys to triangles
-				List<int> indices = new List<int>();
-				List<int> offsets = new List<int>();
-				int i = 0;
-				var cp      = cPolylist.P.Value();
-				while (i < cp.Length) {
-					offsets.Add(i);
-					foreach (int v in cPolylist.VCount.Value()) {
-						for (int j = 2; j < v; j++) {
-							indices.Add(cp[i]);
-							indices.Add(cp[i + j - 1]);
-							indices.Add(cp[i + j]);
-						}
-						i += v;
-					}
-				}
-				
-				mesh.Geometries.Add(new Geometry(
-					Primitive.TRIANGLES, false,
-					vertices, offsets[verticesOffset],
-					texcoords, offsets[texcoordsOffset],
-					indices.ToArray()
-				));
-			}
-			if (cMesh.Triangles != null)
-				foreach (var cTriangles in cMesh.Triangles)
-					mesh.Geometries.Add(createGeom(cTriangles, Primitive.TRIANGLES, sources));
-			if (cMesh.Trifans != null)
-				foreach (var cTrifans in cMesh.Trifans)
-					mesh.Geometries.Add(createGeom(cTrifans, Primitive.TRIFANS, sources));
-			if (cMesh.Tristrips != null)
-				foreach (var cTristrips in cMesh.Tristrips)
-					mesh.Geometries.Add(createGeom(cTristrips, Primitive.TRISTRIPS, sources));
-		}
-		return mesh;
-	}
-	
-	private static object readSource(Source cSource) {
-		if (cSource.BoolArray != null) {
-			return readSource2(cSource.BoolArray.Value(), cSource);
-		} else if (cSource.FloatArray != null) {
-			return readSource2(cSource.FloatArray.Value(), cSource);
-		} else if (cSource.IntArray != null) {
-			return readSource2(cSource.IntArray.Value(), cSource);
-		} else throw new NotImplementedException();
-	}
-	private static object readSource2<T>(T[] array, Source cSource)
-	where T: IConvertible {
-		var cTech = cSource.Technique_Common;
-		var source = new Source<T>();
-		source.Arr = array;
-		source.Stride = cTech == null ? 1 : (int)cTech.Accessor.Stride;
-		return source;
-	}
-	
-	private static Geometry createGeom(GeometryCommonFields cPrim, Primitive type,
-	                                   Dictionary<Tuple<string, InputSemantic>, object> sources) {
-		Source<float> vertices, texcoords;
-		int verticesOffset, texcoordsOffset;
-		primitiveInputs(
-			cPrim.Input, sources,
-			out vertices, out verticesOffset,
-			out texcoords, out texcoordsOffset
+	public Mesh() { }
+	public Mesh(string path) {
+		var importer = new AssimpContext();
+		var config = new NormalSmoothingAngleConfig(66.0f);
+		importer.SetConfig(config);
+		importer.SetConfig(new RemoveComponentConfig(
+			ExcludeComponent.Animations | ExcludeComponent.Boneweights |
+			ExcludeComponent.Cameras | ExcludeComponent.Colors |
+			ExcludeComponent.Lights | ExcludeComponent.Materials
+		));
+		Scene scene = importer.ImportFile(
+			path,
+			PostProcessSteps.RemoveComponent | // Optimization. Excluded components listed above.
+			PostProcessSteps.PreTransformVertices | // Because there is no scenegraph.
+			PostProcessSteps.TransformUVCoords | // Per-texture UV transforms not supported either.
+			PostProcessSteps.OptimizeMeshes |
+			PostProcessPreset.TargetRealTimeQuality
 		);
-		return new Geometry(
-			type, true,
-			vertices, verticesOffset * cPrim.Count * vertices.Stride,
-			texcoords, texcoordsOffset * cPrim.Count * texcoords.Stride,
-			cPrim.P.Value()
-		);
-	}
-	private static void primitiveInputs(InputShared[] inputs, 
-	                                    Dictionary<Tuple<string, InputSemantic>, object> sources,
-	                                    out Source<float> vertices,  out int verticesOffset,
-	                                    out Source<float> texcoords, out int texcoordsOffset) {
-		vertices  = null;
-		verticesOffset  = 0;
-		texcoords = null;
-		texcoordsOffset = 0;
-		foreach (var cIn in inputs) {
-			switch (cIn.Semantic) {
-				case InputSemantic.VERTEX:
-					vertices = getSource<float>(sources, cIn, InputSemantic.POSITION);
-					verticesOffset = cIn.Offset;
-					break;
-				case InputSemantic.TEXCOORD:
-					texcoords = getSource<float>(sources, cIn);
-					texcoordsOffset = cIn.Offset;
-					break;
-			}
-		}
-	}
-	private static Source<T> getSource<T>(Dictionary<Tuple<string, InputSemantic>, object> sources,
-	                                      InputShared input,
-	                                      InputSemantic semantic = InputSemantic.NONE) {
-		return (Source<T>)sources[Tuple.Create(input.source.Substring(1), semantic)];
-	}
-	
-	public enum Primitive { TRIANGLES, TRIFANS, TRISTRIPS };
 
-	[Serializable]
-	public class Source<T> {
-		public T[] Arr         { get; set; }
-		public int Stride      { get; set; }
-		InputSemantic semantic { get; set; }
+		if (!scene.HasMeshes) return;
+		foreach (var sceneMesh in scene.Meshes) {
+			if (!sceneMesh.HasVertices)         continue;
+			if (!sceneMesh.HasTextureCoords(0)) continue;
+			if (!sceneMesh.HasFaces)            continue;
+
+			SubMesh subMesh = new SubMesh();
+
+			subMesh.Vertices = new float[sceneMesh.Vertices.Count * 3];
+			for (int i = 0; i < sceneMesh.Vertices.Count; i++) {
+				subMesh.Vertices[i * 3 + 0] = sceneMesh.Vertices[i].X;
+				subMesh.Vertices[i * 3 + 1] = sceneMesh.Vertices[i].Y;
+				subMesh.Vertices[i * 3 + 2] = sceneMesh.Vertices[i].Z;
+			}
+
+			var texcoords = sceneMesh.TextureCoordinateChannels[0];
+			subMesh.Texcoords = new float[texcoords.Count * 2];
+			for (int i = 0; i < texcoords.Count; i++) {
+				subMesh.Texcoords[i * 2 + 0] = texcoords[i].X;
+				subMesh.Texcoords[i * 2 + 1] = texcoords[i].Y;
+			}
+
+			subMesh.Indices = new int[sceneMesh.Faces.Count * 3];
+			for (int i = 0; i < sceneMesh.Faces.Count; i++) {
+				subMesh.Indices[i * 3 + 0] = sceneMesh.Faces[i].Indices[0];
+				subMesh.Indices[i * 3 + 1] = sceneMesh.Faces[i].Indices[1];
+				subMesh.Indices[i * 3 + 2] = sceneMesh.Faces[i].Indices[2];
+			}
+
+			SubMeshes.Add(subMesh);
+		}
 	}
 
 	[Serializable]
-	public class Geometry {
-		public Geometry() { }
-		public Geometry(Primitive type, bool holes,
-		                Source<float> vertices, int verticesOffset,
-						Source<float> texcoords, int texcoordsOffset,
-						int[] indices) {
-			this.Type       = type;
-			Holes           = holes;
-			Vertices        = vertices;
-			VerticesOffset  = verticesOffset;
-			Texcoords       = texcoords;
-			TexcoordsOffset = texcoordsOffset;
-			Indices         = indices;
-		}
-		
-		public Primitive Type { get; set; }
-		public bool Holes     { get; set; } = true;
-		
-		public Source<float> Vertices  { get; set; }
-		public int VerticesOffset      { get; set; }
-		public Source<float> Normals   { get; set; }
-		public int NormalsOffset       { get; set; }
-		public Source<float> Texcoords { get; set; }
-		public int TexcoordsOffset     { get; set; }
-		public int[] Indices           { get; set; }
+	public class SubMesh {
+		public SubMesh() { }
+		public float[] Vertices  { get; set; }
+		public float[] Texcoords { get; set; }
+		public int[] Indices { get; set; }
 	}
-	public List<Geometry> Geometries { get; set; } = new List<Geometry>();
+	public List<SubMesh> SubMeshes { get; set; } = new List<SubMesh>();
 }

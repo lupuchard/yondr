@@ -148,43 +148,26 @@ public class TestRenderer: IRenderer {
 			if (objs == null) continue;
 			for (int i = 0; i < objs.meshes.Count; i++) {
 				if (!objs.Has(i)) continue;
+				foreach (var mesh in objs.meshes[i].SubMeshes) {
+					//GL.BindTexture(TextureTarget.Texture2D, objs.textures[i].ID);
+					GL.BindTexture(TextureTarget.Texture2D, tex.ID);
+					GL.Uniform1(programTex, 0);
 
-				GMesh mesh = objs.meshes[i];
-				Mesh.Geometry geom = mesh.Mesh.Geometries[0];
+					objs.Spacial.Matrix(i, out spMatrix);
+					//spMatrix = Matrix4.Identity;
+					GL.UniformMatrix4(programSp, false, ref spMatrix);
 
-				BeginMode primitive;
-				switch (geom.Type) {
-					case Mesh.Primitive.TRIANGLES:
-						primitive = BeginMode.Triangles;
-						break;
-					case Mesh.Primitive.TRIFANS:
-						primitive = BeginMode.TriangleFan;
-						break;
-					case Mesh.Primitive.TRISTRIPS:
-						primitive = BeginMode.TriangleStrip;
-						break;
-					default:
-						throw new InvalidOperationException();
+					GL.BindVertexArray(mesh.VaoID);
+
+					GL.EnableVertexAttribArray(programPos);
+					GL.EnableVertexAttribArray(programTexcoord);
+
+					GL.BindBuffer(BufferTarget.ElementArrayBuffer, mesh.IndexID);
+					GL.DrawElements(BeginMode.Triangles, mesh.NumIndices, DrawElementsType.UnsignedInt, 0);
+
+					GL.DisableVertexAttribArray(programPos);
+					GL.DisableVertexAttribArray(programTexcoord);
 				}
-
-				//GL.BindTexture(TextureTarget.Texture2D, objs.textures[i].ID);
-				GL.BindTexture(TextureTarget.Texture2D, tex.ID);
-				GL.Uniform1(programTex, 0);
-
-				objs.Spacial.Matrix(i, out spMatrix);
-				//spMatrix = Matrix4.Identity;
-				GL.UniformMatrix4(programSp, false, ref spMatrix);
-
-				GL.BindVertexArray(mesh.VaoID);
-
-				GL.EnableVertexAttribArray(programPos);
-				GL.EnableVertexAttribArray(programTexcoord);
-
-				GL.BindBuffer(BufferTarget.ElementArrayBuffer, mesh.IndexID);
-				GL.DrawElements(primitive, 24/*geom.Indices.Length*/, DrawElementsType.UnsignedInt, 0);
-
-				GL.DisableVertexAttribArray(programPos);
-				GL.DisableVertexAttribArray(programTexcoord);
 			}
 		}
 

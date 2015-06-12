@@ -77,8 +77,11 @@ public static class TypeMethods {
 	
 	public static Type Transform(this Type type, string path, StreamWriter output) {
 		switch (type) {
+			case Type.OBJ:
+			case Type.MD3:
 			case Type.COLLADA:
-				Mesh mesh = Mesh.FromCollada(path);
+			case Type.BLENDER:
+				Mesh mesh = new Mesh(path);
 				IFormatter formatter = new BinaryFormatter();
 				formatter.Serialize(output.BaseStream, mesh);
 				break;

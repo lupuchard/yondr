@@ -1,55 +1,58 @@
 using System;
+using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL;
 
 public class GMesh {
 	public GMesh(Mesh m) {
 		this.Mesh = m;
-		
-		// TODO: multiple geometries
-		Mesh.Geometry geom = Mesh.Geometries[0];
-		
-		// Create and initialize a vertex array object
-		GL.GenVertexArrays(1, out vaoID);
-		GL.BindVertexArray(vaoID);
+		foreach (var subMesh in this.Mesh.SubMeshes) {
+			SubMesh newMesh = new SubMesh();
 
-		// Vertex buffer
-		GL.GenBuffers(1, out vertID);
-		GL.BindBuffer(BufferTarget.ArrayBuffer, vertID);
-		GL.BufferData(
-			BufferTarget.ArrayBuffer,
-			new IntPtr(geom.Vertices.Arr.Length * sizeof(float)),
-			geom.Vertices.Arr, BufferUsageHint.StaticDraw
-		);
+			// Create and initialize a vertex array object
+			GL.GenVertexArrays(1, out newMesh.VaoID);
+			GL.BindVertexArray(newMesh.VaoID);
 
-		// Texcoord buffer
-		GL.GenBuffers(1, out texID);
-		GL.BindBuffer(BufferTarget.ArrayBuffer, texID);
-		GL.BufferData(
-			BufferTarget.ArrayBuffer,
-			new IntPtr(geom.Texcoords.Arr.Length * sizeof(float)),
-			geom.Texcoords.Arr, BufferUsageHint.StaticDraw
-		);
+			// Vertex buffer
+			GL.GenBuffers(1, out newMesh.VertID);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, newMesh.VertID);
+			GL.BufferData(
+				BufferTarget.ArrayBuffer,
+				new IntPtr(subMesh.Vertices.Length * sizeof(float)),
+				subMesh.Vertices, BufferUsageHint.StaticDraw
+			);
 
-		Log.Info("kay {0}", geom.NormalsOffset - geom.VerticesOffset);
-		Log.Info("{0}", string.Join(",", geom.Vertices.Arr));
-		Log.Info("{0}", string.Join(",", geom.Indices));
+			// Texcoord buffer
+			GL.GenBuffers(1, out newMesh.TexID);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, newMesh.TexID);
+			GL.BufferData(
+				BufferTarget.ArrayBuffer,
+				new IntPtr(subMesh.Texcoords.Length * sizeof(float)),
+				subMesh.Texcoords, BufferUsageHint.StaticDraw
+			);
 
-		// Index buffer
-		GL.GenBuffers(1, out indexID);
-		GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexID);
-		GL.BufferData(
-			BufferTarget.ElementArrayBuffer,
-			new IntPtr((geom.NormalsOffset - geom.VerticesOffset) * sizeof(int)),
-			geom.Indices, BufferUsageHint.StaticDraw
-		);
+			// Index buffer
+			GL.GenBuffers(1, out newMesh.IndexID);
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, newMesh.IndexID);
+			GL.BufferData(
+				BufferTarget.ElementArrayBuffer,
+				new IntPtr(subMesh.Indices.Length * sizeof(int)),
+				subMesh.Indices, BufferUsageHint.StaticDraw
+			);
+
+			newMesh.NumIndices = subMesh.Indices.Length;
+
+			SubMeshes.Add(newMesh);
+		}
 
 		Util.CheckGL("create mesh");
 	}
 	~GMesh() {
-		GL.DeleteVertexArrays(1, ref vaoID);
-		GL.DeleteBuffers(1, ref vertID);
-		GL.DeleteBuffers(1, ref texID);
-		GL.DeleteBuffers(1, ref indexID);
+		foreach (var subMesh in SubMeshes) {
+			GL.DeleteVertexArrays(1, ref subMesh.VaoID);
+			GL.DeleteBuffers(1, ref subMesh.VertID);
+			GL.DeleteBuffers(1, ref subMesh.TexID);
+			GL.DeleteBuffers(1, ref subMesh.IndexID);
+		}
 
 		Util.CheckGL("delete mesh");
 	}
@@ -57,25 +60,27 @@ public class GMesh {
 	public void Link(Shader.Program program, int posAttrib, int texcoordAttrib) {
 		program.Use();
 
-		GL.BindBuffer(BufferTarget.ArrayBuffer, vertID);
-		GL.VertexAttribPointer(posAttrib, 3, VertexAttribPointerType.Float, false, 0, 0);
+		foreach (var subMesh in SubMeshes) {
+			GL.BindBuffer(BufferTarget.ArrayBuffer, subMesh.VertID);
+			GL.VertexAttribPointer(posAttrib, 3, VertexAttribPointerType.Float, false, 0, 0);
 
-		GL.BindBuffer(BufferTarget.ArrayBuffer, texID);
-		GL.VertexAttribPointer(texcoordAttrib, 2, VertexAttribPointerType.Float, false, 0, 0);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, subMesh.TexID);
+			GL.VertexAttribPointer(texcoordAttrib, 2, VertexAttribPointerType.Float, false, 0, 0);
+		}
 
 		GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
 
 		Util.CheckGL("link mesh");
 	}
+
+	public class SubMesh {
+		public int VaoID;
+		public int VertID;
+		public int TexID;
+		public int IndexID;
+		public int NumIndices;
+	}
 	
 	public Mesh Mesh { get; }
-
-	private int vaoID;
-	public int VaoID { get { return vaoID; } }
-
-	private int vertID;
-	private int texID;
-
-	private int indexID;
-	public int IndexID { get { return indexID; } }
+	public List<SubMesh> SubMeshes { get; } = new List<SubMesh>();
 }

@@ -44,7 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PropertySystemTest.cs" />
-    <Compile Include="MeshTest.cs" />
     <Compile Include="SpacialComponentTest.cs" />
   </ItemGroup>
   <ItemGroup>

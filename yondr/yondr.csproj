@@ -44,33 +44,6 @@
     <Compile Include="Log.cs" />
     <Compile Include="ScriptContext.cs" />
     <Compile Include="Res\Mesh.cs" />
-    <Compile Include="Res\Collada\Collada.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\Accessor.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\BoolArray.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\FloatArray.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\InputSemantic.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\InputShared.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\InputUnshared.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\IntArray.cs" />
-    <Compile Include="Res\Collada\Core\DataFlow\Source.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Geometry.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\GeometryCommonFields.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\LibraryGeometries.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Mesh.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Polylist.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Triangles.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Trifans.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Tristrips.cs" />
-    <Compile Include="Res\Collada\Core\Geometry\Vertices.cs" />
-    <Compile Include="Res\Collada\Core\Technique\Technique.cs" />
-    <Compile Include="Res\Collada\Core\Technique\TechniqueCommon.cs" />
-    <Compile Include="Res\Collada\Core\Technique\TechniqueCommonSource.cs" />
-    <Compile Include="Res\Collada\Properties\AssemblyInfo.cs" />
-    <Compile Include="Res\Collada\Types\ArrayString.cs" />
-    <Compile Include="Res\Collada\Types\BoolArrayString.cs" />
-    <Compile Include="Res\Collada\Types\FloatArrayString.cs" />
-    <Compile Include="Res\Collada\Types\IntArrayString.cs" />
-    <Compile Include="Res\Collada\Types\ParseUtils.cs" />
     <Compile Include="SerializableDictionary.cs" />
     <Compile Include="World\EntityGroup.cs" />
     <Compile Include="StringUtil.cs" />
@@ -116,7 +89,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Res\Collada\" />
     <Folder Include="World\Components\" />
   </ItemGroup>
 </Project>
