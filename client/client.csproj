@@ -39,14 +39,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Graphics\GMesh.cs" />
-    <Compile Include="Graphics\Renderer.cs" />
     <Compile Include="Graphics\Shader.cs" />
     <Compile Include="Graphics\Texture.cs" />
     <Compile Include="Client.cs" />
     <Compile Include="Game.cs" />
-    <Compile Include="Graphics\TestRenderer.cs" />
     <Compile Include="Graphics\Util.cs" />
     <Compile Include="Controls.cs" />
+    <Compile Include="Graphics\Renderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

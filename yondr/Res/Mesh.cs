@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Numerics;
 using Assimp;
 using Assimp.Configs;
 
@@ -32,7 +30,7 @@ public class Mesh {
 			if (!sceneMesh.HasTextureCoords(0)) continue;
 			if (!sceneMesh.HasFaces)            continue;
 
-			SubMesh subMesh = new SubMesh();
+			var subMesh = new SubMesh();
 
 			subMesh.Vertices = new float[sceneMesh.Vertices.Count * 3];
 			for (int i = 0; i < sceneMesh.Vertices.Count; i++) {

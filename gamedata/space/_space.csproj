@@ -5,27 +5,32 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{806BF5EB-9DCD-4D11-BB21-68ACCCAB3F82}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>test</RootNamespace>
-    <AssemblyName>test</AssemblyName>
+    <ProjectGuid>{B130B145-02BD-47D8-B21C-94D22DE2E468}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>_space</RootNamespace>
+    <AssemblyName>_space</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\</OutputPath>
+    <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <PlatformTarget>x86</PlatformTarget>
+    <CustomCommands>
+      <CustomCommands>
+        <Command type="Build" command="true" />
+      </CustomCommands>
+    </CustomCommands>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>full</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\</OutputPath>
+    <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -33,36 +38,22 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\yondr\yondr.csproj">
-      <Project>{F09AF069-6A17-4877-99BB-4CA915B49F64}</Project>
-      <Name>yondr</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\client\client.csproj">
-      <Project>{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}</Project>
-      <Name>client</Name>
+    <Compile Include="_properties.cs" />
+    <Compile Include="events.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\script-context\script-context.csproj">
+      <Project>{A73EDE74-5D87-4702-BC75-4B11BA685E86}</Project>
+      <Name>script-context</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PropertySystemTest.cs" />
-    <Compile Include="SpacialComponentTest.cs" />
-    <Compile Include="YamlTest.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="nunit.core, Version=2.6.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77" />
-    <Reference Include="nunit.framework, Version=2.6.3.0, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77" />
     <Reference Include="System.Numerics.Vectors">
-      <HintPath>..\packages\System.Numerics.Vectors.4.0.0\lib\portable-net45+win8+wpa81\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="YamlDotNet">
-      <HintPath>..\packages\YamlDotNet.3.6.0\lib\net35\YamlDotNet.dll</HintPath>
+      <HintPath>..\..\packages\System.Numerics.Vectors.4.0.0\lib\portable-net45+win8+wpa81\System.Numerics.Vectors.dll</HintPath>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="gamedata\test.yaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="gamedata\" />
   </ItemGroup>
 </Project>

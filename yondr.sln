@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "script-context", "script-co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "client\client.csproj", "{F4314A09-6E45-432B-B2D7-2A1AC7FB6B5B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_space", "gamedata\space\_space.csproj", "{B130B145-02BD-47D8-B21C-94D22DE2E468}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -31,6 +33,10 @@ Global
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Debug|x86.Build.0 = Debug|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Release|x86.ActiveCfg = Release|Any CPU
 		{A73EDE74-5D87-4702-BC75-4B11BA685E86}.Release|x86.Build.0 = Release|Any CPU
+		{B130B145-02BD-47D8-B21C-94D22DE2E468}.Debug|x86.ActiveCfg = Debug|x86
+		{B130B145-02BD-47D8-B21C-94D22DE2E468}.Debug|x86.Build.0 = Debug|x86
+		{B130B145-02BD-47D8-B21C-94D22DE2E468}.Release|x86.ActiveCfg = Release|x86
+		{B130B145-02BD-47D8-B21C-94D22DE2E468}.Release|x86.Build.0 = Release|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Debug|x86.ActiveCfg = Debug|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Debug|x86.Build.0 = Debug|x86
 		{F09AF069-6A17-4877-99BB-4CA915B49F64}.Release|x86.ActiveCfg = Release|x86

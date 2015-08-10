@@ -37,12 +37,8 @@
   <Import Project="..\packages\AssimpNet.3.3.1\build\AssimpNet.targets" Condition="Exists('..\packages\AssimpNet.3.3.1\build\AssimpNet.targets')" />
   <ItemGroup>
     <Compile Include="Res\Resource.cs" />
-    <Compile Include="Res\ResourceManager.cs" />
     <Compile Include="World\World.cs" />
-    <Compile Include="Net.cs" />
-    <Compile Include="ScriptManager.cs" />
     <Compile Include="Log.cs" />
-    <Compile Include="ScriptContext.cs" />
     <Compile Include="Res\Mesh.cs" />
     <Compile Include="SerializableDictionary.cs" />
     <Compile Include="World\EntityGroup.cs" />
@@ -57,6 +53,12 @@
     <Compile Include="Res\Yaml.cs" />
     <Compile Include="IRenderer.cs" />
     <Compile Include="IControls.cs" />
+    <Compile Include="Res\Manager.cs" />
+    <Compile Include="Net\Messaging.cs" />
+    <Compile Include="Net\Queue.cs" />
+    <Compile Include="Net\Consts.cs" />
+    <Compile Include="Scripting\ScriptContext.cs" />
+    <Compile Include="Scripting\ScriptManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />
@@ -90,5 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="World\Components\" />
+    <Folder Include="Net\" />
+    <Folder Include="Scripting\" />
   </ItemGroup>
 </Project>

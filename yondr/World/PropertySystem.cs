@@ -2,14 +2,16 @@ using System.Collections.Generic;
 
 public class Property {
 	public Property(string name, Val val, ushort index) {
-		Name  = name;
+		Name = StringUtil.Simplify(name);
+		CamelCaseName = StringUtil.ToCamelCase(name);
 		Value = val;
 		Index = index;
 	}
 
-	public string Name  { get; set; }
-	public Val Value    { get; set; }
-	public ushort Index { get; set; }
+	public string Name          { get; set; }
+	public string CamelCaseName { get; set; }
+	public Val    Value         { get; set; }
+	public ushort Index         { get; set; }
 }
 
 public class PropertySystem {
@@ -24,8 +26,9 @@ public class PropertySystem {
 	/// @return Index of created property.
 	public ushort Add(string name, Val val) {
 		var index = (ushort)properties.Count;
-		nameMap.Add(name, index);
-		properties.Add(new Property(name, val, index));
+		var prop = new Property(name, val, index);
+		nameMap.Add(prop.Name, index);
+		properties.Add(prop);
 		return index;
 	}
 

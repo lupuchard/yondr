@@ -8,11 +8,7 @@ namespace Res {
 
 public class Manager {
 	public Manager(string directory) {
-		Dir        = directory;
-		packages   = new Dictionary<string, Package>();
-		resources  = new List<Res>();
-		resourceD  = new Dictionary<ushort, Res>();
-		nextSessionID = 1;
+		Dir = directory;
 
 		var dir = new DirectoryInfo(directory);
 		if (!dir.Exists) dir.Create();
@@ -59,15 +55,14 @@ public class Manager {
 			
 			var name = StringUtil.Simplify(Path.GetFileNameWithoutExtension(path));
 			if (package.Resources.ContainsKey(name)) {
-				Log.Warn("Resource in package " + package.Name +
-				" with name " + name + " already exists.");
+				Log.Warn("Resource in package {0} named {1} already exists.", package.Name, name);
 				continue;
 			}
 			
 			var type = TypeMethods.FromExtension(Path.GetExtension(path));
 			
 			if (type.TransformsTo() != null) {
-				Type transType = (Type)type.TransformsTo();
+				var transType = (Type)type.TransformsTo();
 				string transFilename = "_" + name + "." + transType.GetExtension();
 				string transPath = Path.Combine(package.Path, transFilename);
 				bool shouldTransform = false;
@@ -79,7 +74,7 @@ public class Manager {
 					}
 				} else shouldTransform = true;
 				if (shouldTransform) using (var transFile = new StreamWriter(transPath)) {
-					type = type.Transform(path, transFile);
+						type = type.Transform(path, transFile);
 				} else {
 					type = transType;
 				}
@@ -96,7 +91,7 @@ public class Manager {
 			NextSessionID(res);
 		}
 	}
-	private long hash(byte[] data) {
+	private static long hash(byte[] data) {
 		long hashValue = 0;
 		long next = 0;
 		int idx = 0;
@@ -180,14 +175,14 @@ public class Manager {
 
 	public string Dir { get; set; }
 
-	private readonly Dictionary<string, Package> packages;
+	private readonly Dictionary<string, Package> packages = new Dictionary<string, Package>();
 	public IReadOnlyDictionary<string, Package> Packages { get { return packages; } }
 
-	private readonly List<Res> resources;
+	private readonly List<Res> resources = new List<Res>();
 	public IReadOnlyList<Res> Resources { get { return resources; } }
-	private readonly Dictionary<ushort, Res> resourceD;
+	private readonly Dictionary<ushort, Res> resourceD = new Dictionary<ushort, Res>();
 	public IReadOnlyDictionary<ushort, Res> ResourceDictionary { get { return resourceD; } }
-	private ushort nextSessionID;
+	private ushort nextSessionID = 1;
 }
 
 }

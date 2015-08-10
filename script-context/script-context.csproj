@@ -34,8 +34,6 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IContext.cs" />
-    <Compile Include="IndexWrappers.cs" />
-    <Compile Include="EntityIdx.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

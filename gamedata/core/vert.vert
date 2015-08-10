@@ -13,7 +13,5 @@ void main() {
 	texcoord = vTexcoord;
 
 	vec4 pos = mvpMatrix * spMatrix * vec4(vPosition.xyz, 1.0);
-	//gl_Position = vec4(pos.xyz, 1.0);
 	gl_Position = pos;
-	//gl_Position = vec4(vPosition.xyz, 1.0);
 }

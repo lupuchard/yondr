@@ -1,17 +1,26 @@
+SELF:
+  properties:
+    - name: character
+      type: entity
+
 objects:
   components: [spacial, graphical]
   properties:
-    - name: _mesh
+    - name: .mesh
       type: string
-    - name: _texture
+    - name: .texture
       type: string
   bases:
-    - yambox: {_mesh: "space:box", _texture: "space:yams"}
+    - yambox: {.mesh: "space:box", .texture: "space:yams"}
 
 mobs:
   components: [spacial]
   properties:
     - name: name
       type: string
+    - name: .mesh
+      type: string
+    - name: .texture
+      type: string
   bases:
-    - player: {name: "paulerson"}
+    - player: {name: "paulerson", .mesh: "space:box", .texture: "space:yams"}

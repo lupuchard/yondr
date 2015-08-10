@@ -6,20 +6,18 @@ public class GraphicalComponent: IComponent {
 	public void Init(PropertySystem propertySystem) {
 		props = propertySystem;
 		
-		meshProperty = props.WithName("_mesh");
+		meshProperty = props.WithName(".mesh");
 		if (meshProperty == null) {
-			Log.Error("Graphical group has no _mesh property.");
-		}
-		if (meshProperty.Value.AsString() == null) {
-			Log.Error("Graphical group's _mesh property is not a string type.");
+			Log.Error("Graphical group has no .mesh property.");
+		} else if (!meshProperty.Value.Is<string>()) {
+			Log.Error("Graphical group's .mesh property is not a string type.");
 		}
 		
-		texProperty = props.WithName("_texture");
+		texProperty = props.WithName(".texture");
 		if (texProperty == null) {
-			Log.Error("Graphical group has no _texture property.");
-		}
-		if (texProperty.Value.AsString() == null) {
-			Log.Error("Graphical group's _texture property is not a string type.");
+			Log.Error("Graphical group has no .texture property.");
+		} else if (!texProperty.Value.Is<string>()) {
+			Log.Error("Graphical group's .texture property is not a string type.");
 		}
 	}
 	

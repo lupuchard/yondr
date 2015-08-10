@@ -17,7 +17,7 @@ public class PropertySystemTest {
 
 		Assert.AreNotEqual(fred.Index, paul.Index);
 		Assert.AreNotEqual(fred.Index, carl.Index);
-		Assert.AreEqual(paul.Value.AsString(), "paulerson");
+		Assert.AreEqual(paul.Value.As<string>(), "paulerson");
 		Assert.AreEqual(props.At(carl.Index).Name, "carl");
 		Assert.AreEqual(props.WithName("phil"), null);
 	}

@@ -4,7 +4,9 @@ using System.Collections.Generic;
 public class EntityGroup {
 	public EntityGroup(string name, byte index) {
 		this.PropertySystem = new PropertySystem(index);
-		Name = name;
+		entities.Add(null);
+		Name = StringUtil.Simplify(name);
+		CamelCaseName = StringUtil.ToCamelCase(name);
 		Index = index;
 	}
 	
@@ -70,7 +72,8 @@ public class EntityGroup {
 	
 	public PropertySystem PropertySystem { get; }
 	public string Name { get; }
-	public byte Index  { get; }
+	public string CamelCaseName { get; }
+	public byte Index { get; }
 	
 	private readonly Dictionary<string, Entity.Base> bases = new Dictionary<string, Entity.Base>();
 	private readonly Dictionary<Type, IComponent> components = new Dictionary<Type, IComponent>();

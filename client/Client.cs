@@ -9,7 +9,7 @@ class Client {
 		public string Host { get; set; }
 
 		[NamedArgument('p', "port", Description = "The port to connect to.")]
-		public ushort Port { get; set; } = Net.DefaultPort;
+		public ushort Port { get; set; } = Net.Consts.DefaultPort;
 	}
 	public static void Main(string[] args) {
 		try {
@@ -38,12 +38,14 @@ class Client {
 		Log.Info("Successfully connected.");
 
 		var world = new World();
-		world.Controls = new Controls();
+		var controls = new Controls();
+		world.Controls = controls;
 		var packages = world.Load(client.resManager);
 
 		Log.Info("Starting window...");
 
 		Game game = new Game(client.resManager, world, 600, 600);
+		controls.SetWindow(game.Window);
 
 		Log.Info("Loading scripts...");
 
@@ -64,13 +66,13 @@ class Client {
 	private Client() {
 		resManager = new Res.Manager("cache");
 	}
-	
+
 	private void connect(string host, ushort port) {
 		Log.Info("Connecting to {0} on port {1}.", host, port);
 		var tcp = new TcpClient(host, port);
 		Log.Info("Connected successfully.");
 		
-		var welcomeMessage = Net.ReceiveMessage<Net.SMessage.Welcome>(tcp);
+		var welcomeMessage = Net.Message.Receive<Net.SMessage.Welcome>(tcp);
 		if (welcomeMessage.Is) {
 			Log.Info("Client has been welcomed with message '{0}'.", welcomeMessage.Message);
 		} else {
@@ -79,7 +81,7 @@ class Client {
 		}
 		
 		Log.Info("Receiving resource request...");
-		var resourcesMessage = Net.ReceiveMessage<Net.SMessage.CheckResources>(tcp);
+		var resourcesMessage = Net.Message.Receive<Net.SMessage.CheckResources>(tcp);
 		var resourceRequest  = new Net.CMessage.RequestResources();
 		var missingResources = new Dictionary<ushort, Net.SMessage.CheckResources.Res>();
 		foreach (var req in resourcesMessage.Resources) {
@@ -95,9 +97,9 @@ class Client {
 		}
 		
 		Log.Info("Client lacks {0} resources. Requesting...", resourceRequest.Resources.Count);
-		Net.SendMessage(tcp, resourceRequest);
+		Net.Message.Send(tcp, resourceRequest);
 		while (missingResources.Count > 0) {
-			var resourceData = Net.ReceiveMessage<Net.SMessage.Resource>(tcp);
+			var resourceData = Net.Message.Receive<Net.SMessage.Resource>(tcp);
 			var res = missingResources[resourceData.SessionID];
 			missingResources.Remove(resourceData.SessionID);
 			Res.Package package;
@@ -110,7 +112,7 @@ class Client {
 		}
 		
 		Log.Info("Declaring ready.");
-		Net.SendMessage(tcp, new Net.CMessage.Ready());
+		Net.Message.Send(tcp, new Net.CMessage.Ready());
 	}
 	
 	private readonly Res.Manager resManager;

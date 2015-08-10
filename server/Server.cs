@@ -9,12 +9,15 @@ class Server {
 	[ApplicationInfo(Description = "The yondr engine server.")]
 	class Options {
 		[NamedArgument('p', "port", Description = "The port to connect to.")]
-		public ushort Port { get; set; } = Net.DefaultPort;
+		public ushort Port { get; set; } = Net.Consts.DefaultPort;
+
+		[NamedArgument('r', "rebuild", Description = "Clear cache before running.", Action = ParseAction.StoreTrue)]
+		public bool Rebuild { get; set; } = false;
 	}
 	public static void Main(string[] args) {
 		try {
 			var options = CliParser.Parse<Options>(args);
-			Listen(options.Port);
+			Listen(options.Port, options.Rebuild);
 		} catch (ParseException e) {
 			Console.WriteLine(e.Message);
 			Console.WriteLine();
@@ -26,15 +29,17 @@ class Server {
 	const double MANAGE_FPS = 1;
 	const int LOCK_TIMEOUT = 5000;
 	
-	static void Listen(ushort port) {
+	static void Listen(ushort port, bool rebuild) {
 		Log.Init("log/server.txt", Log.DEBUG);
 		
 		var server = new Server();
 
 		var world    = new World();
 		var packages = world.Load(server.resManager);
+
 		var scripts = new ScriptManager(world, null, null);
 		foreach (var package in packages) {
+			if (rebuild) scripts.DeleteDll(package);
 			scripts.Compile(package);
 		}
 		scripts.Init();
@@ -74,10 +79,10 @@ class Server {
 		while (!done) {
 			var now = DateTime.Now;
 			double diff = (now - prev).TotalSeconds;
-			if (diff > 1.0 / Net.LogicalFPS) {
+			if (diff > 1.0 / Net.Consts.LogicalFPS) {
 				scripts.Update((float)diff);
 			} else {
-				Thread.Sleep((prev + new TimeSpan(0, 0, 0, 0, 1000 / Net.LogicalFPS)) - now);
+				Thread.Sleep((prev + new TimeSpan(0, 0, 0, 0, 1000 / Net.Consts.LogicalFPS)) - now);
 				diff = (DateTime.Now - prev).TotalSeconds;
 				scripts.Update((float)diff);
 			}
@@ -116,7 +121,7 @@ class Server {
 		// TODO: System.Net.Sockets.SocketException
 
 		// send welcome
-        Net.SendMessage(tcp, new Net.SMessage.Welcome(true, "howdy"));
+        Net.Message.Send(tcp, new Net.SMessage.Welcome(true, "howdy"));
 		
 		// send resource check
         var checkResourcesMessage = new Net.SMessage.CheckResources();
@@ -130,20 +135,20 @@ class Server {
 			checkResourcesMessage.Resources.Add(req);
 		}
 		resManagerLock.ReleaseReaderLock();
-        Net.SendMessage(tcp, checkResourcesMessage);
+        Net.Message.Send(tcp, checkResourcesMessage);
 		
 		// get resource request
-        var request = Net.ReceiveMessage<Net.CMessage.RequestResources>(tcp);
+		var request = Net.Message.Receive<Net.CMessage.RequestResources>(tcp);
 		
 		// send missing resources
 		foreach (ushort sessionID in request.Resources) {
 			resManagerLock.AcquireReaderLock(LOCK_TIMEOUT);
 			Res.Res res = resManager.ResourceDictionary[sessionID];
-            Net.SendMessage(tcp, new Net.SMessage.Resource(sessionID, res.Type, res.Data));
+			Net.Message.Send(tcp, new Net.SMessage.Resource(sessionID, res.Type, res.Data));
 		}
 		
 		// get ready message
-        Net.ReceiveMessage<Net.CMessage.Ready>(tcp);
+        Net.Message.Receive<Net.CMessage.Ready>(tcp);
 	}
 	
 	private readonly Res.Manager resManager;

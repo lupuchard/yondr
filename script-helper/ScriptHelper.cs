@@ -1,13 +1,13 @@
 ﻿using System.Reflection;
 using System.CodeDom.Compiler;
 using System;
-using System.Linq;
 
 [System.Serializable]
 public class ScriptHelper {
 	public Assembly Load(string dll) {
 		return Assembly.LoadFile(dll);
 	}
+
 	public CompilerResults Compile(string[] paths, string outDir) {
 
 		var options = new CompilerParameters();
@@ -25,7 +25,7 @@ public class ScriptHelper {
 				break;
 			}
 		}
-				
+
 		var provider = new Microsoft.CSharp.CSharpCodeProvider();
 
 		return provider.CompileAssemblyFromFile(options, paths);

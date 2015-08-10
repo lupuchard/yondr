@@ -11,8 +11,24 @@ public static class StringUtil {
 		foreach (char c in s) {
 			if (char.IsLetterOrDigit(c) || c == '.') {
 				builder.Append(char.ToLower(c));
+			}
+		}
+		return builder.ToString();
+	}
+
+	public static string ToCamelCase(string s) {
+		bool caps = true;
+		var builder = new StringBuilder();
+		foreach (char c in s) {
+			if (char.IsLetterOrDigit(c)) {
+				if (caps) {
+					builder.Append(char.ToUpper(c));
+					caps = false;
+				} else {
+					builder.Append(char.ToLower(c));
+				}
 			} else if (char.IsWhiteSpace(c) || c == '-' || c == '_') {
-				builder.Append('_');
+				caps = true;
 			}
 		}
 		return builder.ToString();

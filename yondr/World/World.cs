@@ -8,6 +8,8 @@ using YamlDotNet.Serialization.NamingConventions;
 
 public class World {
 
+	public static string Self = "self";
+
 	private class PropertyData {
 		public string Name { get; set; }
 		public Val.Ty Type { get; set; }
@@ -61,6 +63,11 @@ public class World {
 			group.Init();
 		}
 
+		var self = getOrCreateGroup("self");
+		var bass = new Entity.Base(self.PropertySystem);
+
+		self.CreateEntity(bass);
+
 		return packageList;
 	}
 	private void loadPackage(Dictionary<string, PackageData> packages,
@@ -75,18 +82,7 @@ public class World {
 		
 		// gotta deserialize the yamls
 		var deserializer = new Deserializer(namingConvention: new HyphenatedNamingConvention());
-		
-		// insert ImportNodeDeserializer and EnumNodeSerializer before the ScalarNodeDeserializer
-		int scalarIdx = deserializer.NodeDeserializers.Select((d, i) => new {D=d, I=i}).
-		                First(d => d.D is ScalarNodeDeserializer).I;
-		deserializer.NodeDeserializers.Insert(scalarIdx, new EnumNodeDeserializer());
-		var inputNodeDeserializer = new ImportNodeDeserializer(deserializer, package);
-		deserializer.NodeDeserializers.Insert(scalarIdx, inputNodeDeserializer);
-
-		// insert VecNodeDeserializer before ObjectNodeDeserializer
-		int objIdx = deserializer.NodeDeserializers.Select((d, i) => new {D=d, I=i}).
-		             First(d => d.D is ObjectNodeDeserializer).I;
-		deserializer.NodeDeserializers.Insert(objIdx, new VecNodeDeserializer());
+		Yaml.SetNodeDeserializers(deserializer, package);
 
 		// load dependencies
 		if (packageData.deps != null) {
@@ -110,17 +106,7 @@ public class World {
 			var input = new StreamReader(packageData.world);
 			var world = deserializer.Deserialize<Dictionary<string, GroupData>>(input);
 			foreach (var pair in world) {
-				string name = StringUtil.Simplify(pair.Key);
-				EntityGroup group;
-				// check if group already exists
-				if (!groupD.TryGetValue(name, out group)) {
-					if (groups.Count >= 256) {
-						throw new InvalidOperationException("Too many groups! ( >256 )");
-					}
-					group = new EntityGroup(name, (byte)groups.Count);
-					groups.Add(group);
-					groupD[name] = group;
-				}
+				EntityGroup group = getOrCreateGroup(pair.Key);
 				
 				// load properties
 				if (pair.Value.Properties != null) {
@@ -165,8 +151,7 @@ public class World {
 	}
 	private static void loadProperties(PropertyData[] data, EntityGroup group) {
 		foreach (PropertyData prop in data) {
-			string propName = StringUtil.Simplify(prop.Name);
-			group.PropertySystem.Add(propName, loadVal(prop));
+			group.PropertySystem.Add(prop.Name, loadVal(prop));
 		}
 	}
 	private static void loadBases(Dictionary<string, Dictionary<string, string>>[] data,
@@ -183,7 +168,7 @@ public class World {
 							  baseName, group.Name, propName);
 					continue;
 				}
-				Val? val = getVal(prop.Value.Type, valPair.Value);
+				Val? val = Val.FromString(prop.Value.Type, valPair.Value);
 				if (val == null) {
 					Log.Warn("In base {0} in group {1}: '{2}' is given value of wrong type.",
 							  baseName, group.Name, propName);
@@ -195,15 +180,9 @@ public class World {
 		}
 	}
 	private static Val loadVal(PropertyData prop) {
-		Val val = new Val(0);
-		switch (prop.Type) {
-			case Val.Ty.Bool:   val = new Val(false); break;
-			case Val.Ty.Float:  val = new Val(0.0);   break;
-			case Val.Ty.Int:    val = new Val(0);     break;
-			case Val.Ty.String: val = new Val("");    break;
-		}
+		Val val = new Val(prop.Type);
 		if (prop.Default != null) {
-			Val? defVal = getVal(val.Type, prop.Default);
+			Val? defVal = Val.FromString(val.Type, prop.Default);
 			if (defVal == null) {
 				Log.Info("Default value of {0} does not match type ({1}).", prop.Name, val.Type);
 			} else {
@@ -212,18 +191,17 @@ public class World {
 		}
 		return val;
 	}
-	private static Val? getVal(Val.Ty type, string val) {
-		try {
-			switch (type) {
-				case Val.Ty.Bool:   return new Val(Convert.ToBoolean(val));
-				case Val.Ty.Float:  return new Val(Convert.ToDouble(val));
-				case Val.Ty.Int:    return new Val(Convert.ToInt32(val));
-				case Val.Ty.String: return new Val(val);	
-				default: return null;				
+	private EntityGroup getOrCreateGroup(string name) {
+		EntityGroup group;
+		if (!groupD.TryGetValue(StringUtil.Simplify(name), out group)) {
+			if (groups.Count >= 256) {
+				throw new InvalidOperationException("Too many groups! ( >256 )");
 			}
-		} catch (FormatException) {
-			return null;
+			group = new EntityGroup(name, (byte)groups.Count);
+			groups.Add(group);
+			groupD[group.Name] = group;
 		}
+		return group;
 	}
 	
 	private readonly List<EntityGroup> groups = new List<EntityGroup>();
